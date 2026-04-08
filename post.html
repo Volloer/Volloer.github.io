@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Volloer - 投稿作成</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-md">
+        <h1 class="text-2xl font-bold mb-6">とうこう</h1>
+        <form id="postForm" class="space-y-4">
+            <div><label class="block font-bold">タイトル</label><input type="text" id="title" required class="w-full border p-2 rounded"></div>
+            <div><label class="block font-bold">タグ</label><input type="text" id="tags" class="w-full border p-2 rounded" placeholder="コンマ区切り"></div>
+            <div><label class="block font-bold">本文</label><textarea id="content" required class="w-full border p-2 h-40 rounded"></textarea></div>
+            <button type="submit" id="btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded hover:bg-indigo-700">送信する</button>
+        </form>
+        <div id="msg" class="mt-4 text-center"></div>
+        <a href="index.html" class="block text-center mt-4 text-gray-500 text-sm">← ホームに戻る</a>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn');
+            btn.disabled = true;
+            
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if(!user) { alert("ログインしてな！"); btn.disabled = false; return; }
+
+            const { error } = await supabaseClient.from('posts').insert([{
+                title: document.getElementById('title').value,
+                tags: document.getElementById('tags').value,
+                content: document.getElementById('content').value,
+                user_id: user.id
+            }]);
+
+            if (error) { alert(error.message); } else { window.location.href = 'index.html'; }
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>
