@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volloer Project - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <nav class="bg-white shadow-sm p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-indigo-600">Volloer Project</h1>
+            <div class="space-x-4">
+                <a href="#" class="hover:text-indigo-500">Home</a>
+                <a href="login.html" class="hover:text-indigo-500">Login</a>
+                <a href="signup.html" class="hover:text-indigo-500">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-10 px-4">
+        <div class="bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
+            <h2 class="text-2xl font-semibold mb-4">データ送信テスト</h2>
+            <p class="text-gray-600 mb-6">ログインして投稿すると、あなたのID（user_id）と共に保存されます。</p>
+            
+            <form id="dataForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium">タイトル</label>
+                    <input type="text" id="title" required class="w-full border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="例: 今日の進捗">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">内容</label>
+                    <textarea id="content" required class="w-full border border-gray-300 p-2 rounded-md h-32" placeholder="ここにメッセージを入力..."></textarea>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-md hover:bg-indigo-700 transition disabled:bg-gray-400">
+                    送信する
+                </button>
+            </form>
+            <div id="status" class="mt-4 text-center text-sm font-medium"></div>
+        </div>
+    </main>
+
+    <script>
+    const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const form = document.getElementById('dataForm');
+    const status = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        status.innerText = "送信中...";
+        status.className = "mt-4 text-center text-sm font-medium text-gray-600";
+        submitBtn.disabled = true;
+
+        // 1. 今ログインしているユーザーを確認
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        if (!user) {
+            status.innerText = "エラー: ログインが必要です！login.htmlからログインしてください。";
+            status.className = "mt-4 text-center text-sm font-medium text-red-600";
+            submitBtn.disabled = false;
+            return;
+        }
+
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+
+        try {
+            // 2. 記事データと user_id を一緒に送信
+            const { data, error } = await supabaseClient
+                .from('posts') 
+                .insert([{ 
+                    title: title, 
+                    content: content,
+                    user_id: user.id // SQLで設定したリレーション項目
+                }]);
+
+            if (error) throw error;
+
+            status.className = "mt-4 text-center text-sm font-medium text-green-600";
+            status.innerText = "送信完了！Supabaseにあなたの投稿が刻まれました。";
+            form.reset();
+
+        } catch (err) {
+            status.className = "mt-4 text-center text-sm font-medium text-red-600";
+            status.innerText = "エラー発生: " + err.message;
+            console.error(err);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+    </script>
+</body>
+</html>

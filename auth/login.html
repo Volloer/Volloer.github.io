@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6 text-center text-indigo-400">Login</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input type="email" id="email" class="w-full bg-gray-700 border border-gray-600 p-2.5 rounded text-white outline-none focus:ring-2 focus:ring-indigo-500" placeholder="example@mail.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Password</label>
+                <input type="password" id="password" class="w-full bg-gray-700 border border-gray-600 p-2.5 rounded text-white outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+            </div>
+            
+            <button onclick="signIn()" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded transition">
+                ログイン
+            </button>
+        </div>
+
+        <p class="mt-6 text-center text-sm text-gray-400">
+            アカウントをお持ちでないですか？ <a href="signup.html" class="text-green-400 hover:underline">新規登録</a>
+        </p>
+        
+        <div class="mt-2 text-center">
+            <a href="../index.html" class="text-xs text-gray-500 hover:text-gray-300">← ホームへ戻る</a>
+        </div>
+        
+        <p id="message" class="mt-4 text-center text-sm font-medium"></p>
+    </div>
+
+    <script>
+        // ※SUPABASE_URLとKEYを忘れずに記入
+    const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function signIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const message = document.getElementById('message');
+            const btn = document.getElementById('loginBtn');
+
+            message.innerText = "ログイン中...";
+            btn.disabled = true;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                message.innerText = "ログイン失敗: " + error.message;
+                message.className = "mt-4 text-center text-sm text-red-500";
+                btn.disabled = false;
+            } else {
+                message.innerText = "ログイン成功！移動します...";
+                message.className = "mt-4 text-center text-sm text-green-400";
+                // 1秒後にホーム画面へ
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
