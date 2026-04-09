@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>じゅんび中... - Volloer</title>
+    <title>読み込み中 - Volloer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .bg-scratch-blue { background-color: #4d97ff; }
         .text-scratch-blue { color: #4d97ff; }
-        
-        /* Scratch風のくるくるアニメーション */
         .loader {
             border: 8px solid #f3f3f3;
             border-top: 8px solid #4d97ff;
@@ -38,7 +36,6 @@
     </div>
 
     <script>
-        // --- Supabaseの設定 ---
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -48,64 +45,50 @@
             const subText = document.getElementById('subText');
 
             try {
-                // 1. URLからID（Base64）を取得
-                const params = new URLSearchParams(window.location.search);
-                const encodedData = params.get('id');
-
-                if (!encodedData) {
-                    throw new Error('IDが見つかりませんでした。');
+                // --- 変更点：URLからではなく、一時メモリ(sessionStorage)からデータを取る ---
+                const savedData = sessionStorage.getItem('pendingUser');
+                
+                if (!savedData) {
+                    throw new Error('登録データが見つかりませんでした。もう一度やり直してね。');
                 }
 
-                // 2. Base64をデコード (日本語対応版)
-                const binString = atob(encodedData);
-                const uint8array = Uint8Array.from(binString, (m) => m.charCodeAt(0));
-                const decodedData = new TextDecoder().decode(uint8array);
+                // JSONをオブジェクトに戻す
+                const { username, password } = JSON.parse(savedData);
 
-                // 3. ユーザー名とパスワードに分割
-                const [username, password] = decodedData.split(':');
-
-                if (!username || !password) {
-                    throw new Error('データの形式が正しくありません。');
-                }
-
-                // 4. Supabaseに登録 (usersテーブル)
-                // ※注意: 本来はパスワードのハッシュ化推奨。まずはシンプルに実装
-                const { data, error } = await supabaseClient
+                // Supabaseに登録
+                const { error } = await supabaseClient
                     .from('users')
                     .insert([{ username: username, password: password }]);
 
                 if (error) {
-                    // ユーザー名重複などのエラー処理
                     if (error.code === '23505') {
                         throw new Error('そのユーザー名はすでに使われています。');
                     }
                     throw error;
                 }
 
-                // 5. 成功時の処理
+                // 成功したらメモリを消去（お掃除）
+                sessionStorage.removeItem('pendingUser');
+
                 statusText.innerText = '認証成功！';
                 statusText.classList.add('text-green-500');
                 subText.innerText = 'Volloerへようこそ！';
 
-                // 1.5秒後にホームへ移動
                 setTimeout(() => {
                     location.href = 'index.html';
                 }, 1500);
 
             } catch (err) {
-                // エラー時の処理
                 statusText.innerText = 'おっと！';
                 statusText.classList.add('text-red-500');
                 subText.innerText = err.message;
                 
-                // 3秒後に登録画面に戻す
                 setTimeout(() => {
                     location.href = 'signup.html';
                 }, 3000);
             }
         }
 
-        // 実行
         processSignup();
     </script>
 </body>

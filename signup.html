@@ -59,21 +59,23 @@
     </div>
 
     <script>
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+    e.preventDefault();
 
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
 
-            // 日本語対応版のBase64変換 (UTF-8を考慮)
-            const rawData = `${user}:${pass}`;
-            const uint8array = new TextEncoder().encode(rawData);
-            const binString = Array.from(uint8array, (byte) => String.fromCharCode(byte)).join("");
-            const encodedData = btoa(binString);
+    // 1. データを一時的にブラウザに保存（URLには出さない）
+    const userData = {
+        username: user,
+        password: pass
+    };
+    sessionStorage.setItem('pendingUser', JSON.stringify(userData));
 
-            // フォルダなしなので直接 verify.html へ
-            location.href = `verify.html?id=${encodedData}`;
-        });
+    // 2. URLには「登録処理中だよ」という合図だけ入れる
+    // セキュリティを高めるためにランダムな文字列にするのもアリ
+    location.href = `verify.html?mode=new_user`;
+});
     </script>
 </body>
 </html>
