@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サインアップ - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        .bg-scratch-orange { background-color: #ffab19; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-scratch-blue min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
+            <p class="text-gray-400 font-bold mt-2">新しくアカウントを作る</p>
+        </div>
+
+        <form id="signupForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-black text-gray-500 mb-2 ml-1">ユーザー名</label>
+                <div class="relative">
+                    <i class="fa-solid fa-user absolute left-4 top-4 text-gray-300"></i>
+                    <input type="text" id="username" required
+                        class="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-100 focus:border-scratch-blue focus:outline-none transition font-bold"
+                        placeholder="名前を決めてね">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-black text-gray-500 mb-2 ml-1">パスワード</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-4 text-gray-300"></i>
+                    <input type="password" id="password" required
+                        class="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-100 focus:border-scratch-blue focus:outline-none transition font-bold"
+                        placeholder="秘密のパスワード">
+                </div>
+            </div>
+
+            <div class="flex justify-center py-2">
+                <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA"></div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-scratch-orange hover:brightness-110 text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xl">
+                次へすすむ <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </form>
+
+        <p class="text-center mt-6 text-sm font-bold text-gray-400">
+            もう持ってる？ <a href="login.html" class="text-scratch-blue hover:underline">ログイン</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            // 日本語対応版のBase64変換 (UTF-8を考慮)
+            const rawData = `${user}:${pass}`;
+            const uint8array = new TextEncoder().encode(rawData);
+            const binString = Array.from(uint8array, (byte) => String.fromCharCode(byte)).join("");
+            const encodedData = btoa(binString);
+
+            // フォルダなしなので直接 verify.html へ
+            location.href = `verify.html?id=${encodedData}`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>じゅんび中... - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        
+        /* Scratch風のくるくるアニメーション */
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #4d97ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-10 text-center">
+        <div class="flex justify-center mb-6">
+            <div class="loader"></div>
+        </div>
+        
+        <h2 id="statusText" class="text-2xl font-black text-gray-700 mb-2">読み込み中...</h2>
+        <p id="subText" class="text-gray-400 font-bold">アカウントを作成しています</p>
+    </div>
+
+    <script>
+        // --- Supabaseの設定 ---
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function processSignup() {
+            const statusText = document.getElementById('statusText');
+            const subText = document.getElementById('subText');
+
+            try {
+                // 1. URLからID（Base64）を取得
+                const params = new URLSearchParams(window.location.search);
+                const encodedData = params.get('id');
+
+                if (!encodedData) {
+                    throw new Error('IDが見つかりませんでした。');
+                }
+
+                // 2. Base64をデコード (日本語対応版)
+                const binString = atob(encodedData);
+                const uint8array = Uint8Array.from(binString, (m) => m.charCodeAt(0));
+                const decodedData = new TextDecoder().decode(uint8array);
+
+                // 3. ユーザー名とパスワードに分割
+                const [username, password] = decodedData.split(':');
+
+                if (!username || !password) {
+                    throw new Error('データの形式が正しくありません。');
+                }
+
+                // 4. Supabaseに登録 (usersテーブル)
+                // ※注意: 本来はパスワードのハッシュ化推奨。まずはシンプルに実装
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .insert([{ username: username, password: password }]);
+
+                if (error) {
+                    // ユーザー名重複などのエラー処理
+                    if (error.code === '23505') {
+                        throw new Error('そのユーザー名はすでに使われています。');
+                    }
+                    throw error;
+                }
+
+                // 5. 成功時の処理
+                statusText.innerText = '認証成功！';
+                statusText.classList.add('text-green-500');
+                subText.innerText = 'Volloerへようこそ！';
+
+                // 1.5秒後にホームへ移動
+                setTimeout(() => {
+                    location.href = 'index.html';
+                }, 1500);
+
+            } catch (err) {
+                // エラー時の処理
+                statusText.innerText = 'おっと！';
+                statusText.classList.add('text-red-500');
+                subText.innerText = err.message;
+                
+                // 3秒後に登録画面に戻す
+                setTimeout(() => {
+                    location.href = 'signup.html';
+                }, 3000);
+            }
+        }
+
+        // 実行
+        processSignup();
+    </script>
+</body>
+</html>
