@@ -11,7 +11,6 @@
         .bg-scratch-blue { background-color: #4d97ff; }
         .text-scratch-blue { color: #4d97ff; }
         .bg-scratch-orange { background-color: #ffab19; }
-        .hover-scratch-orange:hover { background-color: #e69500; }
         body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     </style>
 </head>
@@ -65,9 +64,26 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // ページ読み込み時にログインチェック
+        window.onload = () => {
+            if (!localStorage.getItem('v_user')) {
+                alert('記事を書くにはログインが必要です！');
+                location.href = 'login.html';
+            }
+        };
+
         document.getElementById('postForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
+            
+            // ログイン情報の取得
+            const savedUser = localStorage.getItem('v_user');
+            if (!savedUser) {
+                alert('ログインが切れているようです。もう一度ログインしてください。');
+                return;
+            }
+            const user = JSON.parse(savedUser);
+
             submitBtn.disabled = true;
             submitBtn.innerText = '投稿中...';
 
@@ -75,28 +91,29 @@
             const tags = document.getElementById('tags').value;
             const content = document.getElementById('content').value;
 
-            // TODO: ログインユーザーのIDを取得する処理（後でauth系と連携）
-            // 現状は一旦アノニマス（匿名）的な動き、またはダミーを想定
-            
-            const { data, error } = await supabaseClient
-                .from('posts')
-                .insert([
-                    { 
-                        title, 
-                        tags, 
-                        content,
-                        good_count: 0, // Goodボタン用
-                        bad_count: 0   // Badボタン用
-                    }
-                ]);
+            try {
+                const { data, error } = await supabaseClient
+                    .from('posts')
+                    .insert([
+                        { 
+                            title: title, 
+                            content: content,
+                            author: user.username, // ログインユーザー名をセット！
+                            tags: tags,            // タグも保存
+                            good_count: 0,
+                            bad_count: 0
+                        }
+                    ]);
 
-            if (error) {
+                if (error) throw error;
+
+                alert('投稿が完了しました！');
+                location.href = 'index.html';
+
+            } catch (error) {
                 alert('エラーが発生しました: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerText = '記事を公開する';
-            } else {
-                alert('投稿が完了しました！');
-                location.href = 'index.html';
             }
         });
     </script>
