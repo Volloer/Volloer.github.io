@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>認証中... - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+    <div id="statusBox" class="text-center p-10 bg-gray-800 rounded-2xl shadow-2xl border border-indigo-500">
+        <div id="loader" class="animate-spin rounded-full h-16 w-16 border-t-4 border-indigo-500 border-opacity-50 mx-auto mb-6"></div>
+        <h1 id="statusText" class="text-2xl font-bold mb-2">アカウントを認証中...</h1>
+        <p id="subText" class="text-gray-400">少々お待ちください</p>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function processAuth() {
+            const urlParams = new URLSearchParams(window.location.search);
+            // signup.html から u (username) と p (password) を受け取る
+            const uRaw = urlParams.get('u');
+            const pRaw = urlParams.get('p');
+
+            if (!uRaw || !pRaw) {
+                showError("認証データが正しく渡されていません。");
+                return;
+            }
+
+            try {
+                const username = decodeURIComponent(atob(uRaw));
+                const password = decodeURIComponent(atob(pRaw));
+
+                // ユーザー名を内部的なメール形式に変換
+                const dummyEmail = `${username}@volloer.internal`;
+
+                // Supabaseでアカウント作成（ユーザー名をメタデータに含める）
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: dummyEmail,
+                    password: password,
+                    options: {
+                        data: { display_name: username }
+                    }
+                });
+
+                if (error) {
+                    showError(error.message);
+                } else {
+                    // 成功時の表示更新
+                    document.getElementById('loader').classList.add('hidden');
+                    document.getElementById('statusText').innerText = "登録完了！🎉";
+                    document.getElementById('statusText').classList.add('text-green-400');
+                    document.getElementById('subText').innerHTML = `
+                        <p class="mb-6 text-gray-300">ユーザー <strong>${username}</strong> として登録されました。</p>
+                        <a href="login.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2 rounded-lg font-bold transition">ログインする</a>
+                    `;
+                }
+            } catch (e) {
+                showError("データの解析に失敗しました。");
+                console.error(e);
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('statusText').innerText = "エラー発生";
+            document.getElementById('statusText').classList.add('text-red-500');
+            document.getElementById('subText').innerText = msg;
+        }
+
+        processAuth();
+    </script>
+</body>
+</html>

@@ -14,8 +14,8 @@
         
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium mb-1">Email</label>
-                <input type="email" id="email" class="w-full bg-gray-700 border border-gray-600 p-2.5 rounded text-white outline-none focus:ring-2 focus:ring-indigo-500" placeholder="example@mail.com">
+                <label class="block text-sm font-medium mb-1">ユーザー名</label>
+                <input type="text" id="username" class="w-full bg-gray-700 border border-gray-600 p-2.5 rounded text-white outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Username">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-1">Password</label>
@@ -32,45 +32,53 @@
         </p>
         
         <div class="mt-2 text-center">
-            <a href="../index.html" class="text-xs text-gray-500 hover:text-gray-300">← ホームへ戻る</a>
+            <a href="index.html" class="text-xs text-gray-500 hover:text-gray-300">← ホームへ戻る</a>
         </div>
         
         <p id="message" class="mt-4 text-center text-sm font-medium"></p>
     </div>
 
     <script>
-        // ※SUPABASE_URLとKEYを忘れずに記入
     const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function signIn() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const message = document.getElementById('message');
-            const btn = document.getElementById('loginBtn');
+    async function signIn() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const message = document.getElementById('message');
+        const btn = document.getElementById('loginBtn');
 
-            message.innerText = "ログイン中...";
-            btn.disabled = true;
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                message.innerText = "ログイン失敗: " + error.message;
-                message.className = "mt-4 text-center text-sm text-red-500";
-                btn.disabled = false;
-            } else {
-                message.innerText = "ログイン成功！移動します...";
-                message.className = "mt-4 text-center text-sm text-green-400";
-                // 1秒後にホーム画面へ
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-            }
+        if (!username || !password) {
+            message.innerText = "ユーザー名とパスワードを入力してください。";
+            message.className = "mt-4 text-center text-sm text-red-500";
+            return;
         }
+
+        message.innerText = "ログイン中...";
+        message.className = "mt-4 text-center text-sm text-gray-400";
+        btn.disabled = true;
+
+        // 内部的に使用しているドメインを付与
+        const dummyEmail = `${username}@volloer.internal`;
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: dummyEmail,
+            password: password,
+        });
+
+        if (error) {
+            message.innerText = "ログイン失敗: " + error.message;
+            message.className = "mt-4 text-center text-sm text-red-500";
+            btn.disabled = false;
+        } else {
+            message.innerText = "ログイン成功！移動します...";
+            message.className = "mt-4 text-center text-sm text-green-400";
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+    }
     </script>
 </body>
 </html>

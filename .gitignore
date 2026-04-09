@@ -1,0 +1,10 @@
+# 秘密のキーが入ったファイル
+secret.env
+
+# Pythonのキャッシュ
+__pycache__/
+*.py[cod]
+
+# OSが勝手に作るゴミファイル
+.DS_Store
+Thumbs.db
