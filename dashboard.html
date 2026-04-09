@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ダッシュボード - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        .bg-scratch-orange { background-color: #ffab19; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <nav class="bg-scratch-blue text-white shadow-md">
+        <div class="container mx-auto flex justify-between items-center px-6 py-3">
+            <h1 class="text-2xl font-black cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
+            <a href="index.html" class="font-bold text-sm hover:underline">ホームに戻る</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto max-w-2xl px-6 py-12">
+        <div class="bg-white rounded-[2rem] shadow-xl p-8 border-2 border-gray-100">
+            <h2 class="text-3xl font-black mb-8 flex items-center gap-3">
+                <i class="fa-solid fa-gear text-gray-400"></i> アカウント設定
+            </h2>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-black text-gray-500 mb-2">ユーザー名</label>
+                    <div id="display-username" class="bg-gray-100 px-4 py-3 rounded-xl font-bold text-gray-400">読み込み中...</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-black text-gray-500 mb-2">自己紹介 (最大100文字)</label>
+                    <textarea id="bioInput" rows="5" maxlength="100"
+                        class="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-scratch-blue outline-none font-medium transition"
+                        placeholder="例：プログラミングが大好きです！"></textarea>
+                    <p class="text-right text-xs text-gray-400 mt-1"><span id="charCount">0</span>/100</p>
+                </div>
+
+                <button onclick="saveProfile()" id="saveBtn"
+                    class="w-full bg-scratch-orange text-white py-4 rounded-full font-black text-lg shadow-lg hover:scale-105 transition active:scale-95">
+                    設定を保存する
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+
+        // 文字数カウントの連動
+        document.getElementById('bioInput').addEventListener('input', (e) => {
+            document.getElementById('charCount').textContent = e.target.value.length;
+        });
+
+        async function initDashboard() {
+            const savedUser = localStorage.getItem('v_user');
+            if (!savedUser) {
+                location.href = 'login.html';
+                return;
+            }
+            currentUser = JSON.parse(savedUser);
+            // .innerText または .textContent を使うのが鉄則
+            document.getElementById('display-username').textContent = currentUser.username;
+
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('bio')
+                .eq('username', currentUser.username)
+                .single();
+
+            if (data && data.bio) {
+                document.getElementById('bioInput').value = data.bio;
+                document.getElementById('charCount').textContent = data.bio.length;
+            }
+        }
+
+        // XSS対策用：HTMLタグを無効化する関数
+        function escapeHTML(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[m];
+            });
+        }
+
+        async function saveProfile() {
+            let bio = document.getElementById('bioInput').value;
+            const btn = document.getElementById('saveBtn');
+
+            // 保存前にエスケープ処理を通す
+            bio = escapeHTML(bio);
+            
+            btn.innerText = "保存中...";
+            btn.disabled = true;
+
+            const { error } = await supabaseClient
+                .from('users')
+                .update({ bio: bio })
+                .eq('username', currentUser.username);
+
+            if (error) {
+                alert("保存に失敗したよ: " + error.message);
+            } else {
+                alert("プロフィールを更新しました！");
+            }
+
+            btn.innerText = "設定を保存する";
+            btn.disabled = false;
+        }
+
+            initDashboard();
+    </script>
+</body>
+</html>

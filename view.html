@@ -9,16 +9,24 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
-    <nav class="bg-[#4d97ff] text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
+    <nav class="bg-[#4d97ff] text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center px-4">
             <h1 class="text-xl font-black cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
-            <a href="index.html" class="text-sm font-bold bg-white/20 px-4 py-2 rounded-full">戻る</a>
+            <a href="index.html" class="text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition">戻る</a>
         </div>
     </nav>
 
     <main class="container mx-auto px-4 py-10 max-w-3xl">
-        <article id="article-content" class="bg-white rounded-3xl p-8 shadow-sm border border-gray-200 min-h-[50vh]">
-            <div class="animate-pulse">読み込み中...</div>
+        <article id="article-content" class="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-gray-100 min-h-[50vh]">
+            <div class="animate-pulse flex flex-col gap-4">
+                <div class="h-10 bg-gray-200 rounded-full w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded-full w-1/4"></div>
+                <div class="space-y-3 mt-8">
+                    <div class="h-4 bg-gray-100 rounded-full"></div>
+                    <div class="h-4 bg-gray-100 rounded-full"></div>
+                    <div class="h-4 bg-gray-100 rounded-full w-5/6"></div>
+                </div>
+            </div>
         </article>
     </main>
 
@@ -27,12 +35,13 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function loadArticle() {
-            // URLの「?id=xxx」からIDを取得する
-            const urlParams = new URLSearchParams(window.location.search);
-            const articleId = urlParams.get('id');
+        let currentArticleId = null;
 
-            if (!articleId) {
+        async function loadArticle() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentArticleId = urlParams.get('id');
+
+            if (!currentArticleId) {
                 location.href = 'index.html';
                 return;
             }
@@ -40,28 +49,86 @@
             const { data, error } = await supabaseClient
                 .from('posts')
                 .select('*')
-                .eq('id', articleId)
-                .single(); // 1件だけ取得
+                .eq('id', currentArticleId)
+                .single();
 
             if (error || !data) {
-                document.getElementById('article-content').innerHTML = "記事が見つかりませんでした。";
+                document.getElementById('article-content').innerHTML = `
+                    <div class="text-center py-20">
+                        <p class="text-gray-400 font-bold">記事が見つかりませんでした。</p>
+                        <button onclick="location.href='index.html'" class="mt-4 text-[#4d97ff] font-bold underline">ホームへ戻る</button>
+                    </div>`;
                 return;
             }
 
-            // 画面に表示
-            document.getElementById('article-content').innerHTML = `
-                <h1 class="text-3xl font-black mb-4">${data.title}</h1>
-                <div class="flex items-center gap-2 mb-8 text-gray-400 text-sm font-bold">
-                    <span><i class="fa-solid fa-user"></i> ${data.author}</span>
-                    <span>•</span>
-                    <span>${new Date(data.created_at).toLocaleDateString()}</span>
-                </div>
-                <div class="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">${data.content}</div>
-                <div class="mt-12 pt-8 border-t flex gap-4">
-                    <button class="bg-gray-100 px-6 py-2 rounded-full font-bold">👍 ${data.good_count || 0}</button>
-                    <button class="bg-gray-100 px-6 py-2 rounded-full font-bold">👎 ${data.bad_count || 0}</button>
-                </div>
+            const container = document.getElementById('article-content');
+            container.innerHTML = ""; // クリア
+
+            // タイトル
+            const titleEl = document.createElement('h1');
+            titleEl.className = "text-3xl md:text-4xl font-black mb-6 leading-tight";
+            titleEl.textContent = data.title;
+
+            // メタ情報 (投稿者リンク)
+            const metaEl = document.createElement('div');
+            metaEl.className = "flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6";
+            const profileUrl = `profile.html?u=${encodeURIComponent(data.author)}`;
+            metaEl.innerHTML = `
+                <a href="${profileUrl}" class="flex items-center gap-2 hover:text-[#4d97ff] transition group">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-[#4d97ff] group-hover:text-white transition">
+                        ${data.author ? data.author.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <span>${data.author}</span>
+                </a>
+                <span>•</span>
+                <span><i class="fa-regular fa-calendar-days mr-1"></i> ${new Date(data.created_at).toLocaleDateString()}</span>
             `;
+
+            // 本文 (XSS対策しつつ改行維持)
+            const contentEl = document.createElement('div');
+            contentEl.className = "prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg";
+            contentEl.textContent = data.content;
+
+            // 評価ボタンエリア
+            const actionsEl = document.createElement('div');
+            actionsEl.className = "mt-16 pt-8 border-t flex gap-4";
+            actionsEl.innerHTML = `
+                <button onclick="updateVote('good')" class="flex items-center gap-2 bg-orange-50 text-[#ffab19] px-8 py-3 rounded-full font-black hover:scale-105 transition active:scale-95 shadow-sm border border-orange-100">
+                    <i class="fa-solid fa-thumbs-up"></i> <span id="good-count">${data.good_count || 0}</span>
+                </button>
+                <button onclick="updateVote('bad')" class="flex items-center gap-2 bg-gray-50 text-gray-400 px-8 py-3 rounded-full font-black hover:scale-105 transition active:scale-95 border border-gray-100">
+                    <i class="fa-solid fa-thumbs-down"></i> <span id="bad-count">${data.bad_count || 0}</span>
+                </button>
+            `;
+
+            container.appendChild(titleEl);
+            container.appendChild(metaEl);
+            container.appendChild(contentEl);
+            container.appendChild(actionsEl);
+        }
+
+        // 評価機能
+        async function updateVote(type) {
+            const field = type === 'good' ? 'good_count' : 'bad_count';
+            const countEl = document.getElementById(`${type}-count`);
+            
+            // 現在の値を取得して+1 (サーバー側のRPCを使うのが理想だが簡易的にupdate)
+            const currentCount = parseInt(countEl.innerText);
+            
+            const updateData = {};
+            updateData[field] = currentCount + 1;
+
+            const { error } = await supabaseClient
+                .from('posts')
+                .update(updateData)
+                .eq('id', currentArticleId);
+
+            if (!error) {
+                countEl.innerText = currentCount + 1;
+                // ボタンを少し弾ませる演出
+                countEl.parentElement.classList.add('animate-bounce');
+                setTimeout(() => countEl.parentElement.classList.remove('animate-bounce'), 500);
+            }
         }
 
         loadArticle();
