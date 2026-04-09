@@ -63,13 +63,23 @@
     <main id="main-content" class="container mx-auto px-6 py-20">
         
         <div id="article-section" class="mb-24">
-            <h3 class="text-3xl font-black mb-8 flex items-center gap-3 text-gray-700">
-                <i class="fa-solid fa-bolt text-scratch-orange"></i> 最新の投稿
-            </h3>
+            <div class="flex justify-between items-end mb-8">
+                <h3 class="text-3xl font-black flex items-center gap-3 text-gray-700">
+                    <i class="fa-solid fa-bolt text-scratch-orange"></i> 最新の投稿
+                </h3>
+                <a href="search.html?q=" class="text-scratch-blue font-bold hover:underline text-sm">すべて見る <i class="fa-solid fa-chevron-right text-[10px]"></i></a>
+            </div>
+            
             <div id="post-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="col-span-full text-center py-10 text-gray-400 font-bold animate-pulse">
                     記事を読み込み中...
                 </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <button onclick="location.href='search.html?q='" class="bg-white border-2 border-gray-200 text-gray-500 px-8 py-3 rounded-full font-black hover:bg-gray-50 hover:border-scratch-blue hover:text-scratch-blue transition-all shadow-sm">
+                    もっと記事を探す
+                </button>
             </div>
         </div>
 
@@ -161,18 +171,18 @@
                 if (introSection) introSection.style.display = 'none';
             }
 
-            // 初回記事読み込み
             fetchPosts();
         });
 
-        // 記事一覧を取得して表示する関数
+        // 記事一覧を最新9件に絞って表示
         async function fetchPosts() {
             const listArea = document.getElementById('post-list');
             
             const { data, error } = await supabaseClient
                 .from('posts')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(6); // 👈 ここで最新9件に制限！
 
             if (error) {
                 listArea.innerHTML = `<p class="col-span-full text-center text-red-500">エラー: ${error.message}</p>`;
@@ -209,7 +219,6 @@
             `).join('');
         }
 
-        // ここを書き換えたよ！検索ボタンを押すと search.html へ飛ぶ
         function searchArticles() {
             const q = document.getElementById('searchInput').value;
             if (q.trim()) {
