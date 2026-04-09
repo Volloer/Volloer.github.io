@@ -20,8 +20,8 @@
             <div class="flex items-center space-x-8">
                 <h1 class="text-2xl font-black tracking-tight cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
                 <div class="hidden md:flex space-x-6">
-                    <a href="index.html" class="hover:opacity-80 font-bold transition">ホーム</a>
-                    <a href="post.html" class="hover:opacity-80 font-bold transition">記事を書く</a>
+                    <a href="index" class="hover:opacity-80 font-bold transition">ホーム</a>
+                    <a href="post" class="hover:opacity-80 font-bold transition">記事を書く</a>
                 </div>
             </div>
             <div class="flex items-center space-x-4">

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記事を投稿する - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        .bg-scratch-orange { background-color: #ffab19; }
+        .hover-scratch-orange:hover { background-color: #e69500; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <nav class="bg-scratch-blue text-white shadow-md mb-8">
+        <div class="container mx-auto flex justify-between items-center px-6 py-3">
+            <h1 class="text-2xl font-black tracking-tight cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
+            <a href="index.html" class="hover:bg-black/10 px-4 py-2 rounded-full font-bold transition text-sm">戻る</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 max-w-2xl">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-8">
+            <h2 class="text-2xl font-black mb-6 text-gray-700 flex items-center">
+                <i class="fa-solid fa-pen-to-square mr-3 text-scratch-blue"></i>新しい記事を書く
+            </h2>
+
+            <form id="postForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-black text-gray-500 mb-2 ml-1">タイトル</label>
+                    <input type="text" id="title" required
+                        class="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-scratch-blue focus:outline-none transition font-bold text-lg"
+                        placeholder="記事のタイトルを入力">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-black text-gray-500 mb-2 ml-1">タグ (カンマ区切り)</label>
+                    <input type="text" id="tags"
+                        class="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-scratch-blue focus:outline-none transition font-bold"
+                        placeholder="例: プログラミング, 料理, Scratch">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-black text-gray-500 mb-2 ml-1">内容</label>
+                    <textarea id="content" required rows="10"
+                        class="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-scratch-blue focus:outline-none transition font-medium leading-relaxed"
+                        placeholder="ここに記事の内容を書いてください..."></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-scratch-orange hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-200 transition-all transform hover:scale-[1.02] active:scale-95 text-xl">
+                    記事を公開する
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = '投稿中...';
+
+            const title = document.getElementById('title').value;
+            const tags = document.getElementById('tags').value;
+            const content = document.getElementById('content').value;
+
+            // TODO: ログインユーザーのIDを取得する処理（後でauth系と連携）
+            // 現状は一旦アノニマス（匿名）的な動き、またはダミーを想定
+            
+            const { data, error } = await supabaseClient
+                .from('posts')
+                .insert([
+                    { 
+                        title, 
+                        tags, 
+                        content,
+                        good_count: 0, // Goodボタン用
+                        bad_count: 0   // Badボタン用
+                    }
+                ]);
+
+            if (error) {
+                alert('エラーが発生しました: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerText = '記事を公開する';
+            } else {
+                alert('投稿が完了しました！');
+                location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
