@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volloer - 記事の共有と評価のコミュニティ</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .bg-scratch-blue { background-color: #4d97ff; }
@@ -47,10 +48,31 @@
             <div id="hero-action" class="flex justify-center space-x-4">
                 <a href="signup.html" class="bg-white text-scratch-blue px-10 py-4 rounded-full font-black text-lg shadow-xl hover:scale-105 transition">アカウント作成（無料）</a>
             </div>
+
+            <div class="max-w-xl mx-auto mt-12 relative px-4">
+                <input type="text" id="searchInput" onkeyup="if(event.key==='Enter') searchArticles()"
+                    class="w-full px-6 py-4 rounded-full border-none shadow-2xl text-gray-700 focus:ring-4 focus:ring-scratch-orange outline-none font-bold" 
+                    placeholder="気になる記事を検索...">
+                <button onclick="searchArticles()" class="absolute right-6 top-2 bg-scratch-orange text-white p-2 rounded-full w-10 h-10 hover:scale-110 transition shadow-lg">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
         </div>
     </header>
 
     <main id="main-content" class="container mx-auto px-6 py-20">
+        
+        <div id="article-section" class="mb-24">
+            <h3 class="text-3xl font-black mb-8 flex items-center gap-3 text-gray-700">
+                <i class="fa-solid fa-bolt text-scratch-orange"></i> 最新の投稿
+            </h3>
+            <div id="post-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="col-span-full text-center py-10 text-gray-400 font-bold animate-pulse">
+                    記事を読み込み中...
+                </div>
+            </div>
+        </div>
+
         <div id="intro-section" class="grid md:grid-cols-2 gap-16 items-center mb-24">
             <div>
                 <h3 class="text-3xl font-black mb-6 border-l-8 border-scratch-blue pl-4">メールアドレスは不要</h3>
@@ -103,6 +125,11 @@
     </footer>
 
     <script>
+        // Supabase設定
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         document.addEventListener('DOMContentLoaded', () => {
             const authArea = document.getElementById('auth-area');
             const heroTitle = document.getElementById('hero-title');
@@ -114,8 +141,6 @@
 
             if (savedUser) {
                 const user = JSON.parse(savedUser);
-
-                // 1. 右上のボタンを「アイコン＋名前＋ログアウト」に
                 authArea.innerHTML = `
                     <div class="flex items-center space-x-3 bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/20 welcome-fade">
                         <div class="w-8 h-8 bg-scratch-orange rounded-full flex items-center justify-center font-black text-white text-xs shadow-inner">
@@ -125,25 +150,75 @@
                         <button onclick="logout()" class="text-[10px] bg-black/10 hover:bg-black/20 px-2 py-1 rounded transition">ログアウト</button>
                     </div>
                 `;
-
-                // 2. ヘッダーを「個人向け」に書き換え
                 heroTitle.innerHTML = `おかえりなさい、<br>${user.username} さん！`;
                 heroTitle.classList.add('welcome-fade');
-                
                 heroDesc.innerText = "今日はどんな素晴らしい知識を共有してくれますか？";
-                
                 heroAction.innerHTML = `
                     <a href="post.html" class="bg-scratch-orange text-white px-12 py-5 rounded-full font-black text-xl shadow-[0_0_30px_rgba(255,171,25,0.4)] hover:scale-110 transition-all flex items-center gap-3 welcome-fade">
                         <i class="fa-solid fa-pen-to-square"></i> 記事を投稿する
                     </a>
                 `;
-
-                // 3. ログイン済みなら「メール不要」の説明セクションを隠してスッキリさせる
-                if (introSection) {
-                    introSection.style.display = 'none';
-                }
+                if (introSection) introSection.style.display = 'none';
             }
+
+            // 初回記事読み込み
+            fetchPosts();
         });
+
+        // 記事一覧を取得して表示する関数
+        async function fetchPosts(query = "") {
+            const listArea = document.getElementById('post-list');
+            
+            let supabaseQuery = supabaseClient
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (query) {
+                supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
+            }
+
+            const { data, error } = await supabaseQuery;
+
+            if (error) {
+                listArea.innerHTML = `<p class="col-span-full text-center text-red-500">エラー: ${error.message}</p>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                listArea.innerHTML = `<p class="col-span-full text-center text-gray-400 py-10 font-bold">記事が見つかりませんでした。</p>`;
+                return;
+            }
+
+            listArea.innerHTML = data.map(post => `
+                <div onclick="location.href='view.html?id=${post.id}'" 
+                     class="bg-white p-6 rounded-[2rem] border-2 border-gray-100 shadow-sm hover:shadow-xl hover:border-scratch-blue transition-all cursor-pointer group transform hover:-translate-y-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-blue-50 text-scratch-blue text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-wider">
+                            ${post.tags ? post.tags.split(',')[0] : 'No Tag'}
+                        </span>
+                    </div>
+                    <h4 class="text-xl font-black mb-2 group-hover:text-scratch-blue transition-colors line-clamp-2">${post.title}</h4>
+                    <p class="text-gray-500 text-sm line-clamp-3 mb-6 font-medium">${post.content}</p>
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-50">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-black">
+                                ${post.author.charAt(0).toUpperCase()}
+                            </div>
+                            <span class="text-xs font-bold text-gray-400">${post.author}</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-gray-400 font-black text-xs">
+                            <span><i class="fa-solid fa-thumbs-up text-scratch-orange mr-1"></i> ${post.good_count || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchArticles() {
+            const q = document.getElementById('searchInput').value;
+            fetchPosts(q);
+        }
 
         function logout() {
             if(confirm('ログアウトしてもいいですか？')) {
