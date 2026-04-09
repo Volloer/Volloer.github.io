@@ -166,19 +166,13 @@
         });
 
         // 記事一覧を取得して表示する関数
-        async function fetchPosts(query = "") {
+        async function fetchPosts() {
             const listArea = document.getElementById('post-list');
             
-            let supabaseQuery = supabaseClient
+            const { data, error } = await supabaseClient
                 .from('posts')
                 .select('*')
                 .order('created_at', { ascending: false });
-
-            if (query) {
-                supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
-            }
-
-            const { data, error } = await supabaseQuery;
 
             if (error) {
                 listArea.innerHTML = `<p class="col-span-full text-center text-red-500">エラー: ${error.message}</p>`;
@@ -186,7 +180,7 @@
             }
 
             if (data.length === 0) {
-                listArea.innerHTML = `<p class="col-span-full text-center text-gray-400 py-10 font-bold">記事が見つかりませんでした。</p>`;
+                listArea.innerHTML = `<p class="col-span-full text-center text-gray-400 py-10 font-bold">記事がまだありません。</p>`;
                 return;
             }
 
@@ -203,9 +197,9 @@
                     <div class="flex justify-between items-center pt-4 border-t border-gray-50">
                         <div class="flex items-center gap-2">
                             <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-black">
-                                ${post.author.charAt(0).toUpperCase()}
+                                ${post.author ? post.author.charAt(0).toUpperCase() : '?'}
                             </div>
-                            <span class="text-xs font-bold text-gray-400">${post.author}</span>
+                            <span class="text-xs font-bold text-gray-400">${post.author || '不明'}</span>
                         </div>
                         <div class="flex items-center gap-3 text-gray-400 font-black text-xs">
                             <span><i class="fa-solid fa-thumbs-up text-scratch-orange mr-1"></i> ${post.good_count || 0}</span>
@@ -215,9 +209,12 @@
             `).join('');
         }
 
+        // ここを書き換えたよ！検索ボタンを押すと search.html へ飛ぶ
         function searchArticles() {
             const q = document.getElementById('searchInput').value;
-            fetchPosts(q);
+            if (q.trim()) {
+                location.href = `search.html?q=${encodeURIComponent(q)}`;
+            }
         }
 
         function logout() {
