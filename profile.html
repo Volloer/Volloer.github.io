@@ -26,25 +26,20 @@
 
     <main class="container mx-auto px-6 py-12 max-w-4xl">
         <div class="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100 text-center mb-12">
-            <div id="profile-avatar" class="w-24 h-24 bg-scratch-orange rounded-full mx-auto mb-6 flex items-center justify-center text-4xl font-black text-white shadow-lg">
-                ?
-            </div>
+            <div id="profile-avatar" class="w-24 h-24 bg-scratch-orange rounded-full mx-auto mb-6 flex items-center justify-center text-4xl font-black text-white shadow-lg">?</div>
             <h2 id="profile-username" class="text-3xl font-black mb-2 text-gray-700">読み込み中...</h2>
             <p id="profile-bio" class="text-gray-500 font-medium mb-8 max-w-lg mx-auto whitespace-pre-wrap"></p>
             
-            <div id="profile-action-area" class="flex justify-center gap-4"></div>
+            <div id="profile-action-area" class="flex justify-center gap-4 items-center">
+                </div>
         </div>
 
         <div class="mb-8">
             <h3 class="text-xl font-black text-gray-600 flex items-center gap-2">
-                <i class="fa-solid fa-book-open text-scratch-blue"></i>
-                <span id="post-list-title">投稿した記事</span>
+                <i class="fa-solid fa-book-open text-scratch-blue"></i> 投稿した記事
             </h3>
         </div>
-
-        <div id="profile-post-list" class="grid md:grid-cols-2 gap-6">
-            <div class="col-span-full text-center py-20 text-gray-400 font-bold">記事を読み込んでいます...</div>
-        </div>
+        <div id="profile-post-list" class="grid md:grid-cols-2 gap-6"></div>
     </main>
 
     <script>
@@ -52,107 +47,96 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- XSS対策用のエスケープ関数 ---
+        let targetUser = ""; // 表示中のユーザー
+        let currentUser = JSON.parse(localStorage.getItem('v_user'));
+
         function escapeHTML(str) {
             if (!str) return "";
-            return str.replace(/[&<>"']/g, function(m) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[m];
-            });
+            return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
         }
 
         async function initProfile() {
             const urlParams = new URLSearchParams(window.location.search);
-            const targetUsername = urlParams.get('u');
-            if (!targetUsername) { location.href = 'index.html'; return; }
+            targetUser = urlParams.get('u');
+            if (!targetUser) { location.href = 'index.html'; return; }
 
-            const savedUser = localStorage.getItem('v_user');
-            const currentUser = savedUser ? JSON.parse(savedUser) : null;
+            const { data: userData, error } = await supabaseClient.from('users').select('*').eq('username', targetUser).single();
+            if (error || !userData) { document.getElementById('profile-username').innerText = "不在"; return; }
 
-            // ユーザー情報（bio含む）を取得
-            const { data: userData, error: userError } = await supabaseClient
-                .from('users')
-                .select('*')
-                .eq('username', targetUsername)
-                .single();
-
-            if (userError || !userData) {
-                document.getElementById('profile-username').innerText = "ユーザーが見つかりません";
-                return;
-            }
-
-            // 表示の更新（textContent/innerTextを使うことでXSSを防ぐ）
             document.getElementById('profile-username').innerText = userData.username;
             document.getElementById('profile-avatar').innerText = userData.username.charAt(0).toUpperCase();
             document.getElementById('profile-bio').innerText = userData.bio || "自己紹介はまだありません。";
-            document.title = `${userData.username} のプロフィール - Volloer`;
-
-            if (currentUser && currentUser.username === userData.username) {
-                document.getElementById('profile-action-area').innerHTML = `
-                    <button onclick="location.href='dashboard.html'" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-full font-black hover:bg-gray-200 transition flex items-center gap-2">
-                        <i class="fa-solid fa-gauge-high"></i> ダッシュボード
-                    </button>
-                    <button onclick="logout()" class="text-red-400 text-sm font-bold hover:underline ml-4">ログアウト</button>
-                `;
-            }
-
-            fetchUserPosts(targetUsername);
-            updateNavbar(currentUser);
+            
+            renderActionButtons();
+            fetchUserPosts();
+            updateNavbar();
         }
 
-        async function fetchUserPosts(username) {
-            const listArea = document.getElementById('profile-post-list');
-            const { data, error } = await supabaseClient
-                .from('posts')
-                .select('*')
-                .eq('author', username)
-                .order('created_at', { ascending: false });
-
-            if (error || data.length === 0) {
-                listArea.innerHTML = `<div class="col-span-full text-center py-20 text-gray-400 font-bold">まだ記事を投稿していません。</div>`;
+        async function renderActionButtons() {
+            const area = document.getElementById('profile-action-area');
+            
+            // 自分のページの場合
+            if (currentUser && currentUser.username === targetUser) {
+                area.innerHTML = `
+                    <button onclick="location.href='dashboard.html'" class="bg-gray-100 text-gray-600 px-6 py-2 rounded-full font-black hover:bg-gray-200 transition text-sm">編集</button>
+                    <button onclick="logout()" class="text-red-400 text-xs font-bold hover:underline ml-2">ログアウト</button>
+                `;
                 return;
             }
 
-            // HTML生成時に escapeHTML を使って記事内容を守る
+            // 他人のページの場合：フォロー中かチェック（ここが「記事評価」の応用！）
+            if (currentUser) {
+                const { data: followData } = await supabaseClient
+                    .from('follows')
+                    .select('*')
+                    .eq('follower_name', currentUser.username)
+                    .eq('following_name', targetUser)
+                    .single();
+
+                if (followData) {
+                    area.innerHTML = `<button onclick="toggleFollow(true)" class="border-2 border-gray-200 text-gray-400 px-8 py-2 rounded-full font-black hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition group text-sm"><span class="group-hover:hidden">フォロー中</span><span class="hidden group-hover:inline">解除する</span></button>`;
+                } else {
+                    area.innerHTML = `<button onclick="toggleFollow(false)" class="bg-scratch-blue text-white px-8 py-2 rounded-full font-black shadow-lg hover:scale-105 transition text-sm"><i class="fa-solid fa-user-plus mr-1"></i> フォローする</button>`;
+                }
+            } else {
+                area.innerHTML = `<p class="text-xs text-gray-400">フォローするにはログインが必要です</p>`;
+            }
+        }
+
+        async function toggleFollow(isFollowing) {
+            if (!currentUser) return;
+
+            if (isFollowing) {
+                // 解除（Delete）
+                await supabaseClient.from('follows').delete().eq('follower_name', currentUser.username).eq('following_name', targetUser);
+            } else {
+                // フォロー（Insert）
+                await supabaseClient.from('follows').insert({ follower_name: currentUser.username, following_name: targetUser });
+            }
+            renderActionButtons(); // ボタンを再描画
+        }
+
+        async function fetchUserPosts() {
+            const listArea = document.getElementById('profile-post-list');
+            const { data } = await supabaseClient.from('posts').select('*').eq('author', targetUser).order('created_at', { ascending: false });
+            if (!data || data.length === 0) { listArea.innerHTML = `<div class="col-span-full text-center py-10 text-gray-300">記事なし</div>`; return; }
+
             listArea.innerHTML = data.map(post => `
-                <div onclick="location.href='view.html?id=${post.id}'" 
-                     class="bg-white p-6 rounded-[2rem] border-2 border-gray-100 shadow-sm hover:shadow-md hover:border-scratch-blue transition-all cursor-pointer group">
-                    <h4 class="text-lg font-black mb-2 group-hover:text-scratch-blue transition-colors line-clamp-2">${escapeHTML(post.title)}</h4>
-                    <p class="text-gray-500 text-xs line-clamp-2 mb-4">${escapeHTML(post.content)}</p>
-                    <div class="flex justify-between items-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        <span><i class="fa-regular fa-calendar mr-1"></i> ${new Date(post.created_at).toLocaleDateString()}</span>
-                        <span><i class="fa-solid fa-thumbs-up text-scratch-orange mr-1"></i> ${post.good_count || 0}</span>
-                    </div>
+                <div onclick="location.href='view.html?id=${post.id}'" class="bg-white p-6 rounded-[2rem] border-2 border-gray-50 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <h4 class="font-black mb-2 line-clamp-1">${escapeHTML(post.title)}</h4>
+                    <p class="text-gray-400 text-xs line-clamp-2">${escapeHTML(post.content)}</p>
                 </div>
             `).join('');
         }
 
-        function updateNavbar(user) {
+        function updateNavbar() {
             const navArea = document.getElementById('nav-auth-area');
-            if (user) {
-                navArea.innerHTML = `
-                    <a href="index.html" class="hover:opacity-80">ホーム</a>
-                    <a href="post.html" class="hover:opacity-80">記事を書く</a>
-                    <a href="profile.html?u=${encodeURIComponent(user.username)}" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center border border-white/20">
-                        ${user.username.charAt(0).toUpperCase()}
-                    </a>
-                `;
-            } else {
-                navArea.innerHTML = `<a href="login.html" class="bg-white text-scratch-blue px-4 py-1.5 rounded-full">ログイン</a>`;
+            if (currentUser) {
+                navArea.innerHTML = `<a href="index.html" class="hover:opacity-80">ホーム</a><a href="profile.html?u=${encodeURIComponent(currentUser.username)}" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center border border-white/20">${currentUser.username.charAt(0).toUpperCase()}</a>`;
             }
         }
 
-        function logout() {
-            if(confirm('ログアウトしますか？')) {
-                localStorage.removeItem('v_user');
-                location.href = 'index.html';
-            }
-        }
+        function logout() { if(confirm('ログアウト？')) { localStorage.removeItem('v_user'); location.href = 'index.html'; } }
 
         initProfile();
     </script>
