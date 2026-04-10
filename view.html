@@ -22,11 +22,6 @@
             <div class="animate-pulse flex flex-col gap-4">
                 <div class="h-10 bg-gray-200 rounded-full w-3/4"></div>
                 <div class="h-4 bg-gray-200 rounded-full w-1/4"></div>
-                <div class="space-y-3 mt-8">
-                    <div class="h-4 bg-gray-100 rounded-full"></div>
-                    <div class="h-4 bg-gray-100 rounded-full"></div>
-                    <div class="h-4 bg-gray-100 rounded-full w-5/6"></div>
-                </div>
             </div>
         </article>
     </main>
@@ -59,42 +54,24 @@
             }
 
             const container = document.getElementById('article-content');
-            container.innerHTML = ""; 
-
-            const titleEl = document.createElement('h1');
-            titleEl.className = "text-3xl md:text-4xl font-black mb-6 leading-tight";
-            titleEl.textContent = data.title;
-
-            const metaEl = document.createElement('div');
-            metaEl.className = "flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6";
-            metaEl.innerHTML = `
-                <div class="flex items-center gap-2">
+            container.innerHTML = `
+                <h1 class="text-3xl md:text-4xl font-black mb-6 leading-tight">${data.title}</h1>
+                <div class="flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6">
                     <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-black">${data.author.charAt(0).toUpperCase()}</div>
                     <span>${data.author}</span>
+                    <span>•</span>
+                    <span>${new Date(data.created_at).toLocaleDateString()}</span>
                 </div>
-                <span>•</span>
-                <span>${new Date(data.created_at).toLocaleDateString()}</span>
+                <div class="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg mb-16">${data.content}</div>
+                <div class="pt-8 border-t flex gap-4">
+                    <button onclick="updateVote('good')" id="btn-good" class="flex items-center gap-2 bg-orange-50 text-[#ffab19] px-8 py-3 rounded-full font-black hover:scale-105 transition shadow-sm border border-orange-100">
+                        <i class="fa-solid fa-thumbs-up"></i> <span id="good-count">${data.good_count || 0}</span>
+                    </button>
+                    <button onclick="updateVote('bad')" id="btn-bad" class="flex items-center gap-2 bg-gray-50 text-gray-400 px-8 py-3 rounded-full font-black hover:scale-105 transition border border-gray-100">
+                        <i class="fa-solid fa-thumbs-down"></i> <span id="bad-count">${data.bad_count || 0}</span>
+                    </button>
+                </div>
             `;
-
-            const contentEl = document.createElement('div');
-            contentEl.className = "prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg";
-            contentEl.textContent = data.content;
-
-            const actionsEl = document.createElement('div');
-            actionsEl.className = "mt-16 pt-8 border-t flex gap-4";
-            actionsEl.innerHTML = `
-                <button onclick="updateVote('good')" id="btn-good" class="flex items-center gap-2 bg-orange-50 text-[#ffab19] px-8 py-3 rounded-full font-black hover:scale-105 transition shadow-sm border border-orange-100">
-                    <i class="fa-solid fa-thumbs-up"></i> <span id="good-count">${data.good_count || 0}</span>
-                </button>
-                <button onclick="updateVote('bad')" id="btn-bad" class="flex items-center gap-2 bg-gray-50 text-gray-400 px-8 py-3 rounded-full font-black hover:scale-105 transition border border-gray-100">
-                    <i class="fa-solid fa-thumbs-down"></i> <span id="bad-count">${data.bad_count || 0}</span>
-                </button>
-            `;
-
-            container.appendChild(titleEl);
-            container.appendChild(metaEl);
-            container.appendChild(contentEl);
-            container.appendChild(actionsEl);
         }
 
         async function updateVote(type) {
@@ -105,7 +82,7 @@
             }
             const user = JSON.parse(savedUser);
 
-            // 1. votesテーブルに挿入を試みる
+            // 1. votesテーブルに記録 (ここで二重投票をブロック)
             const { error: voteError } = await supabaseClient
                 .from('votes')
                 .insert([{ 
@@ -115,18 +92,17 @@
                 }]);
 
             if (voteError) {
-                // 重複エラー(23505)の場合のみ「評価済み」と出す
+                // 重複エラーコード(23505)なら評価済みと出す
                 if (voteError.code === '23505') {
                     alert("この記事には既に評価済みです（一発勝負！）。");
                 } else {
-                    // それ以外はエラー内容を正直に出す
-                    alert("エラー: " + voteError.message);
-                    console.error("詳細:", voteError);
+                    // ここでエラーが出るなら「キャッシュの問題」か「RLSの設定ミス」
+                    alert("システムエラー: " + voteError.message);
                 }
                 return;
             }
 
-            // 2. 成功したらカウントを更新
+            // 2. 成功したらpostsテーブルの数値を+1する
             const field = type === 'good' ? 'good_count' : 'bad_count';
             const countEl = document.getElementById(`${type}-count`);
             const currentCount = parseInt(countEl.innerText);
