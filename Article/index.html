@@ -41,7 +41,7 @@
         <div class="container mx-auto px-6 text-center">
             <h2 id="hero-title" class="text-4xl md:text-6xl font-black mb-6 tracking-tight">あなたの知識を、<br class="md:hidden">価値ある評価へ。</h2>
             <p id="hero-desc" class="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Volloerは、誰でも自由に記事を投稿し、読者のリアルな反応を「Good/Bad」で受け取れる記事共有サイトです。
+                Volloerは、誰でも自由に記事を投稿し、読者のリアルな反応を「Good」で受け取れる記事共有サイトです。
             </p>
             <div id="hero-action" class="flex justify-center space-x-4">
                 <a href="accounts/signup.html" class="bg-white text-scratch-blue px-10 py-4 rounded-full font-black text-lg shadow-xl hover:scale-105 transition">アカウント作成（無料）</a>
@@ -71,6 +71,48 @@
                 <div class="col-span-full text-center py-10 text-gray-400 font-bold animate-pulse">記事を読み込み中...</div>
             </div>
         </div>
+
+        <div class="mt-32 mb-12 border-t-4 border-dashed border-gray-200 pt-20">
+            <div class="bg-white rounded-[3rem] p-8 md:p-16 shadow-xl border-2 border-gray-100 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-scratch-blue/5 rounded-full"></div>
+                <div class="absolute -bottom-10 -left-10 w-60 h-60 bg-scratch-orange/5 rounded-full"></div>
+
+                <div class="relative z-10 max-w-3xl mx-auto text-center">
+                    <h2 class="text-4xl font-black text-gray-800 mb-8 tracking-tight">
+                        <span class="text-scratch-blue">Volloer</span> ってなに？
+                    </h2>
+                    
+                    <p class="text-lg font-bold text-gray-500 leading-relaxed mb-12">
+                        Volloer（ボロアー）は、クリエイターがプログラミングのコツや日常の発見をシェアできる場所です。<br>
+                        Scratchのようなワクワクするデザインで、誰でも簡単に記事を投稿できます。
+                    </p>
+
+                    <div class="grid md:grid-cols-3 gap-8 text-left">
+                        <div class="space-y-3">
+                            <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-scratch-blue text-xl">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-gray-700">アイデアを形に</h3>
+                            <p class="text-sm font-bold text-gray-400">あなたの知識は、誰かの助けになります。</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center text-scratch-orange text-xl">
+                                <i class="fa-solid fa-face-smile"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-gray-700">ポジティブ評価</h3>
+                            <p class="text-sm font-bold text-gray-400">Goodボタンで感謝を伝え合おう！</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-500 text-xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-gray-700">みんなの場所</h3>
+                            <p class="text-sm font-bold text-gray-400">誰もが主役になれるコミュニティです。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="bg-gray-100 border-t border-gray-200 py-12">
@@ -95,7 +137,6 @@
 
             if (savedUser) {
                 const user = JSON.parse(savedUser);
-                // パス修正: accountsフォルダ内へ
                 const profileUrl = `accounts/profile.html?u=${encodeURIComponent(user.username)}`;
 
                 authArea.innerHTML = `
