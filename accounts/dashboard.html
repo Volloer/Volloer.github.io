@@ -11,6 +11,15 @@
         .bg-scratch-blue { background-color: #4d97ff; }
         .text-scratch-blue { color: #4d97ff; }
         .bg-scratch-orange { background-color: #ffab19; }
+        /* Volloer流の丸いボタン */
+        .v-btn {
+            border-bottom: 4px solid rgba(0,0,0,0.2);
+            transition: all 0.1s;
+        }
+        .v-btn:active {
+            border-bottom-width: 0;
+            transform: translateY(4px);
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -18,33 +27,43 @@
     <nav class="bg-scratch-blue text-white shadow-md">
         <div class="container mx-auto flex justify-between items-center px-6 py-3">
             <h1 class="text-2xl font-black cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
-            <a href="../index.html" class="font-bold text-sm hover:underline">ホームに戻る</a>
+            <div class="flex gap-4">
+                <a href="../Article/index.html" class="font-bold text-sm hover:underline">Article</a>
+                <a href="../BoX/index.html" class="font-bold text-sm hover:underline">BoX</a>
+            </div>
         </div>
     </nav>
 
     <main class="container mx-auto max-w-2xl px-6 py-12">
         <div class="bg-white rounded-[2rem] shadow-xl p-8 border-2 border-gray-100">
             <h2 class="text-3xl font-black mb-8 flex items-center gap-3">
-                <i class="fa-solid fa-gear text-gray-400"></i> アカウント設定
+                <i class="fa-solid fa-user-gear text-scratch-blue"></i> アカウント設定
             </h2>
 
             <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-black text-gray-500 mb-2">ユーザー名</label>
-                    <div id="display-username" class="bg-gray-100 px-4 py-3 rounded-xl font-bold text-gray-400">読み込み中...</div>
+                <div class="bg-blue-50 p-4 rounded-2xl border-2 border-blue-100">
+                    <label class="block text-xs font-black text-scratch-blue mb-1 uppercase tracking-widest">Username</label>
+                    <div id="display-username" class="text-xl font-black">読み込み中...</div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-black text-gray-500 mb-2">自己紹介 (最大100文字)</label>
-                    <textarea id="bioInput" rows="5" maxlength="100"
-                        class="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-scratch-blue outline-none font-medium transition"
-                        placeholder="例：プログラミングが大好きです！"></textarea>
-                    <p class="text-right text-xs text-gray-400 mt-1"><span id="charCount">0</span>/100</p>
+                    <label class="block text-sm font-black text-gray-500 mb-2 ml-1">自己紹介 (100文字以内)</label>
+                    <textarea id="bioInput" rows="4" maxlength="100"
+                        class="w-full px-5 py-4 rounded-[1.5rem] border-2 border-gray-100 focus:border-scratch-blue outline-none font-medium transition bg-gray-50"
+                        placeholder="何を書く？"></textarea>
+                    <p class="text-right text-xs text-gray-400 mt-2 font-bold"><span id="charCount">0</span> / 100</p>
                 </div>
 
                 <button onclick="saveProfile()" id="saveBtn"
-                    class="w-full bg-scratch-orange text-white py-4 rounded-full font-black text-lg shadow-lg hover:scale-105 transition active:scale-95">
-                    設定を保存する
+                    class="w-full bg-scratch-orange v-btn text-white py-4 rounded-2xl font-black text-xl shadow-lg">
+                    プロフィールを保存
+                </button>
+
+                <hr class="border-gray-100 my-4">
+
+                <button onclick="logout()" 
+                    class="w-full text-gray-400 font-bold hover:text-red-500 transition text-sm">
+                    ログアウトする
                 </button>
             </div>
         </div>
@@ -64,7 +83,7 @@
         async function initDashboard() {
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
-                // パス修正：login.htmlは同じフォルダ内にあるのでそのまま
+                // 同じフォルダ内の login.html へ
                 location.href = 'login.html';
                 return;
             }
@@ -78,30 +97,16 @@
                 .single();
 
             if (data && data.bio) {
-                // 表示する時はエスケープを戻さず、そのままvalueに入れる（textareaはタグを解釈しないため）
+                // textareaはエスケープ不要なのでそのまま
                 document.getElementById('bioInput').value = data.bio;
                 document.getElementById('charCount').textContent = data.bio.length;
             }
         }
 
-        function escapeHTML(str) {
-            return str.replace(/[&<>"']/g, function(m) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
-                }[m];
-            });
-        }
-
         async function saveProfile() {
-            let bio = document.getElementById('bioInput').value;
+            const bio = document.getElementById('bioInput').value;
             const btn = document.getElementById('saveBtn');
 
-            bio = escapeHTML(bio);
-            
             btn.innerText = "保存中...";
             btn.disabled = true;
 
@@ -111,13 +116,20 @@
                 .eq('username', currentUser.username);
 
             if (error) {
-                alert("保存に失敗したよ: " + error.message);
+                alert("失敗しちゃった: " + error.message);
             } else {
-                alert("プロフィールを更新しました！");
+                alert("プロフィールを更新したよ！");
             }
 
-            btn.innerText = "設定を保存する";
+            btn.innerText = "プロフィールを保存";
             btn.disabled = false;
+        }
+
+        function logout() {
+            if(confirm('ログアウトしてもいい？')) {
+                localStorage.removeItem('v_user');
+                location.href = '../index.html';
+            }
         }
 
         initDashboard();

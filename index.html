@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volloer - 創造と対話のプラットフォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        .bg-scratch-orange { background-color: #ffab19; }
+        .v-card {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-bottom: 6px solid rgba(0,0,0,0.1);
+        }
+        .v-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <nav class="bg-white border-b-4 border-gray-100 px-6 py-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-black text-scratch-blue tracking-tighter">Volloer</h1>
+            <div id="nav-auth" class="flex gap-4 items-center">
+                <a href="accounts/login.html" class="font-bold text-gray-400 hover:text-scratch-blue">ログイン</a>
+                <a href="accounts/signup.html" class="bg-scratch-orange text-white px-6 py-2 rounded-full font-black shadow-lg hover:scale-105 transition">参加する</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-scratch-blue text-white py-20 px-6">
+        <div class="container mx-auto text-center">
+            <h2 class="text-5xl md:text-7xl font-black mb-6 tracking-tighter">世界をもっと、おもしろく。</h2>
+            <p class="text-xl md:text-2xl font-bold opacity-90 mb-10">Volloerは、知識を共有し、仲間と語り合える場所です。</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 -mt-16 mb-20">
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            
+            <div onclick="location.href='Article/index.html'" class="v-card bg-white p-10 rounded-[3rem] cursor-pointer group">
+                <div class="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-scratch-blue transition-colors">
+                    <i class="fa-solid fa-book-open text-4xl text-scratch-blue group-hover:text-white"></i>
+                </div>
+                <h3 class="text-3xl font-black mb-4">Article</h3>
+                <p class="text-gray-500 font-bold leading-relaxed">あなたの知識や発見を記事にして、世界中に発信しよう。役立つ情報がここに集まります。</p>
+                <div class="mt-8 flex items-center gap-2 font-black text-scratch-blue uppercase tracking-widest text-sm">
+                    Open Article <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+
+            <div onclick="location.href='BoX/index.html'" class="v-card bg-white p-10 rounded-[3rem] cursor-pointer group">
+                <div class="w-20 h-20 bg-orange-100 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-scratch-orange transition-colors">
+                    <i class="fa-solid fa-comments text-4xl text-scratch-orange group-hover:text-white"></i>
+                </div>
+                <h3 class="text-3xl font-black mb-4">BoX</h3>
+                <p class="text-gray-500 font-bold leading-relaxed">共通の趣味や目的で集まるコミュニティ。リアルタイムなチャットで仲間と繋がろう。</p>
+                <div class="mt-8 flex items-center gap-2 font-black text-scratch-orange uppercase tracking-widest text-sm">
+                    Enter BoX <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-white py-12 border-t-4 border-gray-100">
+        <div class="container mx-auto px-6 text-center">
+            <p class="font-black text-gray-300 uppercase tracking-[0.3em]">© 2026 Volloer Project</p>
+        </div>
+    </footer>
+
+    <script>
+        // ログイン状態のチェック
+        const user = localStorage.getItem('v_user');
+        if (user) {
+            const userData = JSON.parse(user);
+            document.getElementById('nav-auth').innerHTML = `
+                <a href="accounts/dashboard.html" class="flex items-center gap-2 font-black text-gray-700 hover:text-scratch-blue transition">
+                    <i class="fa-solid fa-circle-user text-2xl"></i>
+                    <span>${userData.username}</span>
+                </a>
+            `;
+        }
+    </script>
+</body>
+</html>
