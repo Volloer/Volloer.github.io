@@ -25,9 +25,9 @@
 
     <nav class="bg-white border-b-4 border-gray-100 px-6 py-4">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-black text-scratch-blue tracking-tighter">Volloer</h1>
+            <h1 class="text-3xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
             <div id="nav-auth" class="flex gap-4 items-center">
-                <a href="accounts/login.html" class="font-bold text-gray-400 hover:text-scratch-blue">ログイン</a>
+                <a href="accounts/login.html" class="font-bold text-gray-400 hover:text-scratch-blue transition">ログイン</a>
                 <a href="accounts/signup.html" class="bg-scratch-orange text-white px-6 py-2 rounded-full font-black shadow-lg hover:scale-105 transition">参加する</a>
             </div>
         </div>
@@ -75,10 +75,10 @@
     </footer>
 
     <script>
-        // ログイン状態のチェック
         const user = localStorage.getItem('v_user');
         if (user) {
             const userData = JSON.parse(user);
+            // パス修正: ログイン後の遷移先も accountsフォルダ内に
             document.getElementById('nav-auth').innerHTML = `
                 <a href="accounts/dashboard.html" class="flex items-center gap-2 font-black text-gray-700 hover:text-scratch-blue transition">
                     <i class="fa-solid fa-circle-user text-2xl"></i>
