@@ -37,7 +37,6 @@
 
         let currentArticleId = null;
 
-        // --- 1. 記事を読み込む関数 ---
         async function loadArticle() {
             const urlParams = new URLSearchParams(window.location.search);
             currentArticleId = urlParams.get('id');
@@ -104,7 +103,6 @@
             container.appendChild(actionsEl);
         }
 
-        // --- 2. 投票（二重投票防止機能付き） ---
         async function updateVote(type) {
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
@@ -113,52 +111,66 @@
             }
             const user = JSON.parse(savedUser);
 
-            // ① すでに投票済みかチェック
-            const { data: existingVote, error: checkError } = await supabaseClient
+            // ① すでに投票済みかチェック（.single()を使わず配列で取得）
+            const { data: votes, error: checkError } = await supabaseClient
                 .from('votes')
                 .select('*')
                 .eq('post_id', currentArticleId)
-                .eq('username', user.username)
-                .single();
+                .eq('username', user.username);
 
-            if (existingVote) {
-                alert("この記事には既に評価済みです。");
+            const field = type === 'good' ? 'good_count' : 'bad_count';
+            const countEl = document.getElementById(`${type}-count`);
+            let currentCount = parseInt(countEl.innerText);
+
+            // すでにデータが存在する場合
+            if (votes && votes.length > 0) {
+                const existingVote = votes[0];
+
+                if (existingVote.vote_type === type) {
+                    // 同じボタンなら「取り消し」
+                    const { error: deleteError } = await supabaseClient
+                        .from('votes')
+                        .delete()
+                        .eq('id', existingVote.id);
+
+                    if (!deleteError) {
+                        const newCount = Math.max(0, currentCount - 1);
+                        await supabaseClient
+                            .from('posts')
+                            .update({ [field]: newCount })
+                            .eq('id', currentArticleId);
+                        
+                        countEl.innerText = newCount;
+                        alert("評価を取り消しました。");
+                    }
+                } else {
+                    alert("既に別の評価をしています。取り消してから押し直してください。");
+                }
                 return;
             }
 
-            // ② 投票記録を保存
+            // ② 新規投票の処理
             const { error: insertError } = await supabaseClient.from('votes').insert([{
                 post_id: currentArticleId,
                 username: user.username,
                 vote_type: type
             }]);
 
-            if (insertError) {
-                console.error("投票の記録に失敗しました:", insertError);
-                return;
-            }
+            if (!insertError) {
+                const newCount = currentCount + 1;
+                const { error: updateError } = await supabaseClient
+                    .from('posts')
+                    .update({ [field]: newCount })
+                    .eq('id', currentArticleId);
 
-            // ③ カウントアップ
-            const field = type === 'good' ? 'good_count' : 'bad_count';
-            const countEl = document.getElementById(`${type}-count`);
-            const currentCount = parseInt(countEl.innerText);
-
-            const { error: updateError } = await supabaseClient
-                .from('posts')
-                .update({ [field]: currentCount + 1 })
-                .eq('id', currentArticleId);
-
-            if (!updateError) {
-                countEl.innerText = currentCount + 1;
-                alert("投票しました！");
-            } else {
-                alert("エラーが発生しました。");
+                if (!updateError) {
+                    countEl.innerText = newCount;
+                    alert("投票しました！");
+                }
             }
         }
 
-        // --- 3. ページ読み込み時に実行 ---
         loadArticle();
-
     </script>
 </body>
 </html>
