@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>記事一覧 - Volloer</title>
+    <title>Volloer - 記事の共有と評価のコミュニティ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,6 +12,7 @@
         .text-scratch-blue { color: #4d97ff; }
         .bg-scratch-orange { background-color: #ffab19; }
         body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+        /* ログイン中限定のふわっとしたアニメーション */
         .welcome-fade { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
@@ -24,33 +25,34 @@
     <nav class="bg-scratch-blue text-white shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center px-6 py-3">
             <div class="flex items-center space-x-8">
-                <h1 class="text-2xl font-black tracking-tight cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
+                <h1 class="text-2xl font-black tracking-tight cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
                 <div class="hidden md:flex space-x-6">
-                    <a href="../index.html" class="hover:opacity-80 font-bold transition">ホーム</a>
-                    <a href="post.html" id="write-nav" class="hover:opacity-80 font-bold transition">記事を書く</a>
+                    <a href="index.html" class="hover:opacity-80 font-bold transition">ホーム</a>
+                    <a href="Article/post.html" id="write-nav" class="hover:opacity-80 font-bold transition">記事を書く</a>
                 </div>
             </div>
             <div id="auth-area" class="flex items-center space-x-4">
-                <a href="../accounts/login.html" class="font-bold text-sm">ログイン</a>
-                <a href="../accounts/signup.html" class="bg-scratch-orange hover:brightness-110 text-white px-5 py-2 rounded-full font-black shadow-sm transition text-sm">今すぐ参加</a>
+                <a href="accounts/login.html" class="font-bold text-sm">ログイン</a>
+                <a href="accounts/signup.html" class="bg-scratch-orange hover:brightness-110 text-white px-5 py-2 rounded-full font-black shadow-sm transition text-sm">今すぐ参加</a>
             </div>
         </div>
     </nav>
 
     <header id="hero-section" class="bg-scratch-blue text-white py-20 border-b border-black/10 transition-all">
         <div class="container mx-auto px-6 text-center">
-            <h2 id="hero-title" class="text-4xl md:text-6xl font-black mb-6 tracking-tight">知恵を共有しよう。</h2>
+            <h2 id="hero-title" class="text-4xl md:text-6xl font-black mb-6 tracking-tight">あなたの知識を、<br class="md:hidden">価値ある評価へ。</h2>
             <p id="hero-desc" class="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Volloerの全ユーザーが投稿した最新の記事をチェックできます。
+                Volloerは、誰でも自由に記事を投稿し、<br class="hidden md:block">
+                読者のリアルな反応を「Good/Bad」で受け取れる記事共有サイトです。
             </p>
             <div id="hero-action" class="flex justify-center space-x-4">
-                <a href="../accounts/signup.html" class="bg-white text-scratch-blue px-10 py-4 rounded-full font-black text-lg shadow-xl hover:scale-105 transition">参加して投稿する</a>
+                <a href="accounts/signup.html" class="bg-white text-scratch-blue px-10 py-4 rounded-full font-black text-lg shadow-xl hover:scale-105 transition">アカウント作成（無料）</a>
             </div>
 
             <div class="max-w-xl mx-auto mt-12 relative px-4">
                 <input type="text" id="searchInput" onkeyup="if(event.key==='Enter') searchArticles()"
                     class="w-full px-6 py-4 rounded-full border-none shadow-2xl text-gray-700 focus:ring-4 focus:ring-scratch-orange outline-none font-bold" 
-                    placeholder="記事をキーワードで検索...">
+                    placeholder="気になる記事を検索...">
                 <button onclick="searchArticles()" class="absolute right-6 top-2 bg-scratch-orange text-white p-2 rounded-full w-10 h-10 hover:scale-110 transition shadow-lg">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
@@ -59,15 +61,59 @@
     </header>
 
     <main id="main-content" class="container mx-auto px-6 py-20">
+        
         <div id="article-section" class="mb-24">
             <div class="flex justify-between items-end mb-8">
                 <h3 class="text-3xl font-black flex items-center gap-3 text-gray-700">
                     <i class="fa-solid fa-bolt text-scratch-orange"></i> 最新の投稿
                 </h3>
+                <a href="Article/search.html?q=" class="text-scratch-blue font-bold hover:underline text-sm">すべて見る <i class="fa-solid fa-chevron-right text-[10px]"></i></a>
             </div>
             
             <div id="post-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="col-span-full text-center py-10 text-gray-400 font-bold animate-pulse">
+                    記事を読み込み中...
                 </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <button onclick="location.href='Article/search.html?q='" class="bg-white border-2 border-gray-200 text-gray-500 px-8 py-3 rounded-full font-black hover:bg-gray-50 hover:border-scratch-blue hover:text-scratch-blue transition-all shadow-sm">
+                    もっと記事を探す
+                </button>
+            </div>
+        </div>
+
+        <div id="intro-section" class="grid md:grid-cols-2 gap-16 items-center mb-24">
+            <div>
+                <h3 class="text-3xl font-black mb-6 border-l-8 border-scratch-blue pl-4">メールアドレスは不要</h3>
+                <p class="text-gray-600 text-lg leading-relaxed mb-4">
+                    プライバシーを気にする必要はありません。ユーザー名とパスワードだけで、すぐに記事の投稿や評価を始めることができます。
+                </p>
+                <p class="text-sm text-gray-400 font-bold">※独自の認証システムにより、匿名性を保ったまま参加可能です。</p>
+            </div>
+            <div class="bg-blue-100 rounded-3xl p-10 text-center">
+                <i class="fa-solid fa-user-shield text-scratch-blue text-8xl"></i>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            <div class="order-2 md:order-1 bg-orange-100 rounded-3xl p-10 text-center">
+                <div class="flex justify-center space-x-8">
+                    <i class="fa-solid fa-thumbs-up text-scratch-orange text-8xl"></i>
+                    <i class="fa-solid fa-thumbs-down text-gray-400 text-8xl"></i>
+                </div>
+            </div>
+            <div class="order-1 md:order-2">
+                <h3 class="text-3xl font-black mb-6 border-l-8 border-scratch-orange pl-4">シンプルな2軸評価</h3>
+                <p class="text-gray-600 text-lg leading-relaxed mb-6">
+                    複雑なコメントのやり取りに疲れる必要はありません。「役に立った（Good）」か「そうでないか（Bad）」のシンプルなボタンで、記事の質をみんなで判断します。
+                </p>
+                <ul class="space-y-3 font-bold text-gray-700">
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> 役に立つ情報を一目で見極める</li>
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> 投稿者にダイレクトな評価を届ける</li>
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> 荒れにくい健全なコミュニティ</li>
+                </ul>
+            </div>
         </div>
     </main>
 
@@ -75,15 +121,21 @@
         <div class="container mx-auto px-6 text-center">
             <h4 class="text-xl font-black text-gray-400 mb-6 tracking-widest uppercase">Volloer</h4>
             <div class="flex justify-center space-x-8 mb-8 font-bold text-gray-500">
-                <a href="../index.html" class="hover:text-scratch-blue transition">トップ</a>
+                <a href="index.html" class="hover:text-scratch-blue transition">トップ</a>
                 <a href="#" class="hover:text-scratch-blue transition">利用規約</a>
                 <a href="#" class="hover:text-scratch-blue transition">ガイドライン</a>
+            </div>
+            <div class="max-w-xl mx-auto mb-6">
+                <p class="text-[10px] text-gray-400 leading-relaxed">
+                    "Scratch"はMITメディア・ラボのライセンスに基づき使用される商標です。本サイトはScratch公式とは関係ありません。
+                </p>
             </div>
             <p class="text-xs text-gray-400 font-medium">© 2026 Volloer Project. All Rights Reserved.</p>
         </div>
     </footer>
 
     <script>
+        // Supabase設定
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -93,16 +145,15 @@
             const heroTitle = document.getElementById('hero-title');
             const heroDesc = document.getElementById('hero-desc');
             const heroAction = document.getElementById('hero-action');
+            const introSection = document.getElementById('intro-section');
             
             const savedUser = localStorage.getItem('v_user');
 
             if (savedUser) {
                 const user = JSON.parse(savedUser);
-                // パス修正：accounts/profile.html へ
-                const profileUrl = `../accounts/profile.html?u=${encodeURIComponent(user.username)}`;
                 authArea.innerHTML = `
                     <div class="flex items-center space-x-3 bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/20 welcome-fade">
-                        <a href="${profileUrl}" class="flex items-center gap-2">
+                        <a href="accounts/profile.html?u=${encodeURIComponent(user.username)}" class="flex items-center gap-2 hover:opacity-80 transition">
                             <div class="w-8 h-8 bg-scratch-orange rounded-full flex items-center justify-center font-black text-white text-xs shadow-inner">
                                 ${user.username.charAt(0).toUpperCase()}
                             </div>
@@ -111,41 +162,60 @@
                         <button onclick="logout()" class="text-[10px] bg-black/10 hover:bg-black/20 text-white px-2 py-1 rounded transition">ログアウト</button>
                     </div>
                 `;
-                heroTitle.innerText = `ようこそ、${user.username} さん`;
+                heroTitle.innerHTML = `おかえりなさい、<br>${user.username} さん！`;
+                heroTitle.classList.add('welcome-fade');
+                heroDesc.innerText = "今日はどんな素晴らしい知識を共有してくれますか？";
                 heroAction.innerHTML = `
-                    <a href="post.html" class="bg-scratch-orange text-white px-12 py-5 rounded-full font-black text-xl shadow-lg hover:scale-110 transition flex items-center gap-3">
-                        <i class="fa-solid fa-pen-to-square"></i> 記事を書く
+                    <a href="Article/post.html" class="bg-scratch-orange text-white px-12 py-5 rounded-full font-black text-xl shadow-[0_0_30px_rgba(255,171,25,0.4)] hover:scale-110 transition-all flex items-center gap-3 welcome-fade">
+                        <i class="fa-solid fa-pen-to-square"></i> 記事を投稿する
                     </a>
                 `;
+                if (introSection) introSection.style.display = 'none';
             }
+
             fetchPosts();
         });
 
+        // 記事一覧を最新6件に絞って表示
         async function fetchPosts() {
             const listArea = document.getElementById('post-list');
+            
             const { data, error } = await supabaseClient
                 .from('posts')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(6);
 
-            if (error || !data) {
-                listArea.innerHTML = '<p class="text-center col-span-full text-gray-400">記事がありません</p>';
+            if (error) {
+                listArea.innerHTML = `<p class="col-span-full text-center text-red-500">エラー: ${error.message}</p>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                listArea.innerHTML = `<p class="col-span-full text-center text-gray-400 py-10 font-bold">記事がまだありません。</p>`;
                 return;
             }
 
             listArea.innerHTML = data.map(post => `
-                <div onclick="location.href='view.html?id=${post.id}'" 
+                <div onclick="location.href='Article/view.html?id=${post.id}'" 
                      class="bg-white p-6 rounded-[2rem] border-2 border-gray-100 shadow-sm hover:shadow-xl hover:border-scratch-blue transition-all cursor-pointer group transform hover:-translate-y-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-blue-50 text-scratch-blue text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-wider">
+                            ${post.tags ? post.tags.split(',')[0] : 'No Tag'}
+                        </span>
+                    </div>
                     <h4 class="text-xl font-black mb-2 group-hover:text-scratch-blue transition-colors line-clamp-2">${post.title}</h4>
                     <p class="text-gray-500 text-sm line-clamp-3 mb-6 font-medium">${post.content}</p>
                     <div class="flex justify-between items-center pt-4 border-t border-gray-50">
-                        <div onclick="event.stopPropagation(); location.href='../accounts/profile.html?u=${encodeURIComponent(post.author)}'" class="flex items-center gap-2 hover:opacity-70 transition">
+                        <div onclick="event.stopPropagation(); location.href='accounts/profile.html?u=${encodeURIComponent(post.author)}'" class="flex items-center gap-2 hover:opacity-70 transition">
                             <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-black">
                                 ${post.author ? post.author.charAt(0).toUpperCase() : '?'}
                             </div>
                             <span class="text-xs font-bold text-gray-400">${post.author || '不明'}</span>
                         </div>
-                        <span class="text-gray-400 font-black text-xs"><i class="fa-solid fa-thumbs-up text-scratch-orange mr-1"></i> ${post.good_count || 0}</span>
+                        <div class="flex items-center gap-3 text-gray-400 font-black text-xs">
+                            <span><i class="fa-solid fa-thumbs-up text-scratch-orange mr-1"></i> ${post.good_count || 0}</span>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -153,11 +223,13 @@
 
         function searchArticles() {
             const q = document.getElementById('searchInput').value;
-            if (q.trim()) location.href = `search.html?q=${encodeURIComponent(q)}`;
+            if (q.trim()) {
+                location.href = `Article/search.html?q=${encodeURIComponent(q)}`;
+            }
         }
 
         function logout() {
-            if(confirm('ログアウトしますか？')) {
+            if(confirm('ログアウトしてもいいですか？')) {
                 localStorage.removeItem('v_user');
                 location.reload();
             }
