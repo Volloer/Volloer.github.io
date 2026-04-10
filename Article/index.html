@@ -12,7 +12,6 @@
         .text-scratch-blue { color: #4d97ff; }
         .bg-scratch-orange { background-color: #ffab19; }
         body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-        /* ログイン中限定のふわっとしたアニメーション */
         .welcome-fade { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
@@ -42,8 +41,7 @@
         <div class="container mx-auto px-6 text-center">
             <h2 id="hero-title" class="text-4xl md:text-6xl font-black mb-6 tracking-tight">あなたの知識を、<br class="md:hidden">価値ある評価へ。</h2>
             <p id="hero-desc" class="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Volloerは、誰でも自由に記事を投稿し、<br class="hidden md:block">
-                読者のリアルな反応を「Good/Bad」で受け取れる記事共有サイトです。
+                Volloerは、誰でも自由に記事を投稿し、読者のリアルな反応を「Good/Bad」で受け取れる記事共有サイトです。
             </p>
             <div id="hero-action" class="flex justify-center space-x-4">
                 <a href="accounts/signup.html" class="bg-white text-scratch-blue px-10 py-4 rounded-full font-black text-lg shadow-xl hover:scale-105 transition">アカウント作成（無料）</a>
@@ -61,7 +59,6 @@
     </header>
 
     <main id="main-content" class="container mx-auto px-6 py-20">
-        
         <div id="article-section" class="mb-24">
             <div class="flex justify-between items-end mb-8">
                 <h3 class="text-3xl font-black flex items-center gap-3 text-gray-700">
@@ -125,17 +122,11 @@
                 <a href="#" class="hover:text-scratch-blue transition">利用規約</a>
                 <a href="#" class="hover:text-scratch-blue transition">ガイドライン</a>
             </div>
-            <div class="max-w-xl mx-auto mb-6">
-                <p class="text-[10px] text-gray-400 leading-relaxed">
-                    "Scratch"はMITメディア・ラボのライセンスに基づき使用される商標です。本サイトはScratch公式とは関係ありません。
-                </p>
-            </div>
             <p class="text-xs text-gray-400 font-medium">© 2026 Volloer Project. All Rights Reserved.</p>
         </div>
     </footer>
 
     <script>
-        // Supabase設定
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -146,11 +137,11 @@
             const heroDesc = document.getElementById('hero-desc');
             const heroAction = document.getElementById('hero-action');
             const introSection = document.getElementById('intro-section');
-            
             const savedUser = localStorage.getItem('v_user');
 
             if (savedUser) {
                 const user = JSON.parse(savedUser);
+                // パス修正：プロフィールへのリンク
                 authArea.innerHTML = `
                     <div class="flex items-center space-x-3 bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/20 welcome-fade">
                         <a href="accounts/profile.html?u=${encodeURIComponent(user.username)}" class="flex items-center gap-2 hover:opacity-80 transition">
@@ -172,14 +163,11 @@
                 `;
                 if (introSection) introSection.style.display = 'none';
             }
-
             fetchPosts();
         });
 
-        // 記事一覧を最新6件に絞って表示
         async function fetchPosts() {
             const listArea = document.getElementById('post-list');
-            
             const { data, error } = await supabaseClient
                 .from('posts')
                 .select('*')
@@ -188,11 +176,6 @@
 
             if (error) {
                 listArea.innerHTML = `<p class="col-span-full text-center text-red-500">エラー: ${error.message}</p>`;
-                return;
-            }
-
-            if (data.length === 0) {
-                listArea.innerHTML = `<p class="col-span-full text-center text-gray-400 py-10 font-bold">記事がまだありません。</p>`;
                 return;
             }
 
