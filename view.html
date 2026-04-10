@@ -37,6 +37,7 @@
 
         let currentArticleId = null;
 
+        // --- 1. 記事を読み込む関数 ---
         async function loadArticle() {
             const urlParams = new URLSearchParams(window.location.search);
             currentArticleId = urlParams.get('id');
@@ -62,14 +63,12 @@
             }
 
             const container = document.getElementById('article-content');
-            container.innerHTML = ""; // クリア
+            container.innerHTML = "";
 
-            // タイトル
             const titleEl = document.createElement('h1');
             titleEl.className = "text-3xl md:text-4xl font-black mb-6 leading-tight";
             titleEl.textContent = data.title;
 
-            // メタ情報 (投稿者リンク)
             const metaEl = document.createElement('div');
             metaEl.className = "flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6";
             const profileUrl = `profile.html?u=${encodeURIComponent(data.author)}`;
@@ -84,12 +83,10 @@
                 <span><i class="fa-regular fa-calendar-days mr-1"></i> ${new Date(data.created_at).toLocaleDateString()}</span>
             `;
 
-            // 本文 (XSS対策しつつ改行維持)
             const contentEl = document.createElement('div');
             contentEl.className = "prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg";
             contentEl.textContent = data.content;
 
-            // 評価ボタンエリア
             const actionsEl = document.createElement('div');
             actionsEl.className = "mt-16 pt-8 border-t flex gap-4";
             actionsEl.innerHTML = `
@@ -107,56 +104,61 @@
             container.appendChild(actionsEl);
         }
 
-        // 評価機能
+        // --- 2. 投票（二重投票防止機能付き） ---
         async function updateVote(type) {
-    const savedUser = localStorage.getItem('v_user');
-    if (!savedUser) {
-        alert("評価するにはログインが必要です。");
-        return;
-    }
-    const user = JSON.parse(savedUser);
+            const savedUser = localStorage.getItem('v_user');
+            if (!savedUser) {
+                alert("評価するにはログインが必要です。");
+                return;
+            }
+            const user = JSON.parse(savedUser);
 
-    // --- ここから追加 ---
-    // まず、すでに投票データがあるか確認する
-    const { data: existingVote, error: checkError } = await supabaseClient
-        .from('votes')
-        .select('*')
-        .eq('post_id', currentArticleId)
-        .eq('username', user.username)
-        .single();
+            // ① すでに投票済みかチェック
+            const { data: existingVote, error: checkError } = await supabaseClient
+                .from('votes')
+                .select('*')
+                .eq('post_id', currentArticleId)
+                .eq('username', user.username)
+                .single();
 
-    if (existingVote) {
-        alert("この記事には既に評価済みです。");
-        return;
-    }
-    // --- ここまで追加 ---
+            if (existingVote) {
+                alert("この記事には既に評価済みです。");
+                return;
+            }
 
-    // あとは、今までの「カウントを増やす処理」をそのまま書く
-    const field = type === 'good' ? 'good_count' : 'bad_count';
-    const countEl = document.getElementById(`${type}-count`);
-    const currentCount = parseInt(countEl.innerText);
+            // ② 投票記録を保存
+            const { error: insertError } = await supabaseClient.from('votes').insert([{
+                post_id: currentArticleId,
+                username: user.username,
+                vote_type: type
+            }]);
 
-    // 1. votesに記録を残す
-    await supabaseClient.from('votes').insert([{
-        post_id: currentArticleId,
-        username: user.username,
-        vote_type: type
-    }]);
+            if (insertError) {
+                console.error("投票の記録に失敗しました:", insertError);
+                return;
+            }
 
-    // 2. カウントアップ
-    const { error: updateError } = await supabaseClient
-        .from('posts')
-        .update({ [field]: currentCount + 1 })
-        .eq('id', currentArticleId);
+            // ③ カウントアップ
+            const field = type === 'good' ? 'good_count' : 'bad_count';
+            const countEl = document.getElementById(`${type}-count`);
+            const currentCount = parseInt(countEl.innerText);
 
-    if (!updateError) {
-        countEl.innerText = currentCount + 1;
-        alert("投票しました！");
-    }
+            const { error: updateError } = await supabaseClient
+                .from('posts')
+                .update({ [field]: currentCount + 1 })
+                .eq('id', currentArticleId);
 
-    // ページが読み込まれたら、記事を取得する関数を実行する
+            if (!updateError) {
+                countEl.innerText = currentCount + 1;
+                alert("投票しました！");
+            } else {
+                alert("エラーが発生しました。");
+            }
+        }
+
+        // --- 3. ページ読み込み時に実行 ---
         loadArticle();
-}
+
     </script>
 </body>
 </html>
