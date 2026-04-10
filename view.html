@@ -105,7 +105,7 @@
             }
             const user = JSON.parse(savedUser);
 
-            // 1. votesテーブルに挿入を試みる (同一ユーザー・同一記事はSQLで弾かれる)
+            // 1. votesテーブルに挿入を試みる
             const { error: voteError } = await supabaseClient
                 .from('votes')
                 .insert([{ 
@@ -115,7 +115,14 @@
                 }]);
 
             if (voteError) {
-                alert("この記事には既に評価済みです（一発勝負！）。");
+                // 重複エラー(23505)の場合のみ「評価済み」と出す
+                if (voteError.code === '23505') {
+                    alert("この記事には既に評価済みです（一発勝負！）。");
+                } else {
+                    // それ以外はエラー内容を正直に出す
+                    alert("エラー: " + voteError.message);
+                    console.error("詳細:", voteError);
+                }
                 return;
             }
 
@@ -132,6 +139,8 @@
             if (!updateError) {
                 countEl.innerText = currentCount + 1;
                 alert(type === 'good' ? "Goodしました！" : "Badを付けました。");
+            } else {
+                alert("データの更新に失敗しました。");
             }
         }
 
