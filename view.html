@@ -109,29 +109,51 @@
 
         // 評価機能
         async function updateVote(type) {
-            const field = type === 'good' ? 'good_count' : 'bad_count';
-            const countEl = document.getElementById(`${type}-count`);
-            
-            // 現在の値を取得して+1 (サーバー側のRPCを使うのが理想だが簡易的にupdate)
-            const currentCount = parseInt(countEl.innerText);
-            
-            const updateData = {};
-            updateData[field] = currentCount + 1;
+    const savedUser = localStorage.getItem('v_user');
+    if (!savedUser) {
+        alert("評価するにはログインが必要です。");
+        return;
+    }
+    const user = JSON.parse(savedUser);
 
-            const { error } = await supabaseClient
-                .from('posts')
-                .update(updateData)
-                .eq('id', currentArticleId);
+    // --- ここから追加 ---
+    // まず、すでに投票データがあるか確認する
+    const { data: existingVote, error: checkError } = await supabaseClient
+        .from('votes')
+        .select('*')
+        .eq('post_id', currentArticleId)
+        .eq('username', user.username)
+        .single();
 
-            if (!error) {
-                countEl.innerText = currentCount + 1;
-                // ボタンを少し弾ませる演出
-                countEl.parentElement.classList.add('animate-bounce');
-                setTimeout(() => countEl.parentElement.classList.remove('animate-bounce'), 500);
-            }
-        }
+    if (existingVote) {
+        alert("この記事には既に評価済みです。");
+        return;
+    }
+    // --- ここまで追加 ---
 
-        loadArticle();
+    // あとは、今までの「カウントを増やす処理」をそのまま書く
+    const field = type === 'good' ? 'good_count' : 'bad_count';
+    const countEl = document.getElementById(`${type}-count`);
+    const currentCount = parseInt(countEl.innerText);
+
+    // 1. votesに記録を残す
+    await supabaseClient.from('votes').insert([{
+        post_id: currentArticleId,
+        username: user.username,
+        vote_type: type
+    }]);
+
+    // 2. カウントアップ
+    const { error: updateError } = await supabaseClient
+        .from('posts')
+        .update({ [field]: currentCount + 1 })
+        .eq('id', currentArticleId);
+
+    if (!updateError) {
+        countEl.innerText = currentCount + 1;
+        alert("投票しました！");
+    }
+}
     </script>
 </body>
 </html>
