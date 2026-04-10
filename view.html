@@ -29,7 +29,11 @@
     <script>
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // ★重要: キャッシュを強制的にリフレッシュするためのオプションを追加
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            db: { schema: 'public' }
+        });
 
         let currentArticleId = null;
 
@@ -82,7 +86,7 @@
             }
             const user = JSON.parse(savedUser);
 
-            // 1. votesテーブルに記録 (ここで二重投票をブロック)
+            // 1. votesテーブルに記録
             const { error: voteError } = await supabaseClient
                 .from('votes')
                 .insert([{ 
@@ -92,17 +96,18 @@
                 }]);
 
             if (voteError) {
-                // 重複エラーコード(23505)なら評価済みと出す
                 if (voteError.code === '23505') {
                     alert("この記事には既に評価済みです（一発勝負！）。");
+                } else if (voteError.message.includes("schema cache")) {
+                    alert("サーバーが準備中です。10秒ほど待ってからもう一度お試しください。");
                 } else {
-                    // ここでエラーが出るなら「キャッシュの問題」か「RLSの設定ミス」
-                    alert("システムエラー: " + voteError.message);
+                    alert("エラー: " + voteError.message);
+                    console.error("詳細:", voteError);
                 }
                 return;
             }
 
-            // 2. 成功したらpostsテーブルの数値を+1する
+            // 2. postsテーブルの数値を+1する
             const field = type === 'good' ? 'good_count' : 'bad_count';
             const countEl = document.getElementById(`${type}-count`);
             const currentCount = parseInt(countEl.innerText);
@@ -117,6 +122,7 @@
                 alert(type === 'good' ? "Goodしました！" : "Badを付けました。");
             } else {
                 alert("データの更新に失敗しました。");
+                console.error(updateError);
             }
         }
 
