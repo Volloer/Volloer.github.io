@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>応募フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+        <h2 class="text-2xl font-black mb-1 text-center text-indigo-400">APPLICATION</h2>
+        <p class="text-gray-400 text-xs text-center mb-8 uppercase tracking-widest">Entry Form</p>
+
+        <form id="applyForm" class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">名前 / Discord ID</label>
+                <input type="text" id="name" required 
+                    class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition text-white" 
+                    placeholder="例: 山田太郎#1234">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">応募理由・意気込み</label>
+                <textarea id="message" rows="5" required
+                    class="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition text-white" 
+                    placeholder="ここにメッセージを入力してください"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn" 
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-xl shadow-lg transition transform active:scale-95">
+                送信する
+            </button>
+        </form>
+
+        <div id="statusMsg" class="mt-6 text-center text-sm hidden font-bold"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const form = document.getElementById('applyForm');
+        const btn = document.getElementById('submitBtn');
+        const msg = document.getElementById('statusMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            btn.disabled = true;
+            btn.innerText = '送信中...';
+
+            const { error } = await supabaseClient
+                .from('applications')
+                .insert([{
+                    name: document.getElementById('name').value,
+                    message: document.getElementById('message').value
+                    // emailフィールドは送らない
+                }]);
+
+            if (error) {
+                msg.innerText = '❌ エラー: ' + error.message;
+                msg.classList.replace('text-green-400', 'text-red-400');
+            } else {
+                msg.innerText = '✅ 送信が完了しました！';
+                msg.className = 'mt-6 text-center text-sm text-green-400 font-bold';
+                form.reset();
+            }
+            msg.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerText = '送信する';
+        });
+    </script>
+</body>
+</html>
