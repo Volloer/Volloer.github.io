@@ -64,11 +64,11 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ページ読み込み時にログインチェック
         window.onload = () => {
             if (!localStorage.getItem('v_user')) {
                 alert('記事を書くにはログインが必要です！');
-                location.href = 'login.html';
+                // ★パス修正：login.html は accounts フォルダの中にある
+                location.href = 'accounts/login.html';
             }
         };
 
@@ -76,10 +76,11 @@
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             
-            // ログイン情報の取得
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
                 alert('ログインが切れているようです。もう一度ログインしてください。');
+                // ★ここもパス修正
+                location.href = 'accounts/login.html';
                 return;
             }
             const user = JSON.parse(savedUser);
@@ -98,8 +99,8 @@
                         { 
                             title: title, 
                             content: content,
-                            author: user.username, // ログインユーザー名をセット！
-                            tags: tags,            // タグも保存
+                            author: user.username,
+                            tags: tags,
                             good_count: 0,
                             bad_count: 0
                         }

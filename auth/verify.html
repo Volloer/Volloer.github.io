@@ -45,17 +45,14 @@
             const subText = document.getElementById('subText');
 
             try {
-                // --- 変更点：URLからではなく、一時メモリ(sessionStorage)からデータを取る ---
                 const savedData = sessionStorage.getItem('pendingUser');
                 
                 if (!savedData) {
                     throw new Error('登録データが見つかりませんでした。もう一度やり直してね。');
                 }
 
-                // JSONをオブジェクトに戻す
                 const { username, password } = JSON.parse(savedData);
 
-                // Supabaseに登録
                 const { error } = await supabaseClient
                     .from('users')
                     .insert([{ username: username, password: password }]);
@@ -67,7 +64,6 @@
                     throw error;
                 }
 
-                // 成功したらメモリを消去（お掃除）
                 sessionStorage.removeItem('pendingUser');
 
                 statusText.innerText = '認証成功！';
@@ -75,7 +71,8 @@
                 subText.innerText = 'Volloerへようこそ！';
 
                 setTimeout(() => {
-                    location.href = 'index.html';
+                    // ★パス修正：Article/index.html に戻る
+                    location.href = '../index.html';
                 }, 1500);
 
             } catch (err) {
@@ -84,7 +81,8 @@
                 subText.innerText = err.message;
                 
                 setTimeout(() => {
-                    location.href = 'signup.html';
+                    // ★パス修正：Article/accounts/signup.html に戻る
+                    location.href = '../accounts/signup.html';
                 }, 3000);
             }
         }

@@ -70,7 +70,10 @@
 
             const metaEl = document.createElement('div');
             metaEl.className = "flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6";
-            const profileUrl = `profile.html?u=${encodeURIComponent(data.author)}`;
+            
+            // ★パス修正：profile.html は accounts フォルダの中にある
+            const profileUrl = `accounts/profile.html?u=${encodeURIComponent(data.author)}`;
+            
             metaEl.innerHTML = `
                 <a href="${profileUrl}" class="flex items-center gap-2 hover:text-[#4d97ff] transition group">
                     <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-[#4d97ff] group-hover:text-white transition">
@@ -111,7 +114,6 @@
             }
             const user = JSON.parse(savedUser);
 
-            // ① すでに投票済みかチェック（.single()を使わず配列で取得）
             const { data: votes, error: checkError } = await supabaseClient
                 .from('votes')
                 .select('*')
@@ -122,12 +124,9 @@
             const countEl = document.getElementById(`${type}-count`);
             let currentCount = parseInt(countEl.innerText);
 
-            // すでにデータが存在する場合
             if (votes && votes.length > 0) {
                 const existingVote = votes[0];
-
                 if (existingVote.vote_type === type) {
-                    // 同じボタンなら「取り消し」
                     const { error: deleteError } = await supabaseClient
                         .from('votes')
                         .delete()
@@ -149,7 +148,6 @@
                 return;
             }
 
-            // ② 新規投票の処理
             const { error: insertError } = await supabaseClient.from('votes').insert([{
                 post_id: currentArticleId,
                 username: user.username,

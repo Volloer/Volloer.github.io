@@ -18,7 +18,7 @@
 
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
+            <h1 class="text-4xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
             <p class="text-gray-400 font-bold mt-2">新しくアカウントを作る</p>
         </div>
 
@@ -60,22 +60,20 @@
 
     <script>
     document.getElementById('signupForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+        e.preventDefault();
 
-    const user = document.getElementById('username').value;
-    const pass = document.getElementById('password').value;
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
 
-    // 1. データを一時的にブラウザに保存（URLには出さない）
-    const userData = {
-        username: user,
-        password: pass
-    };
-    sessionStorage.setItem('pendingUser', JSON.stringify(userData));
+        const userData = {
+            username: user,
+            password: pass
+        };
+        sessionStorage.setItem('pendingUser', JSON.stringify(userData));
 
-    // 2. URLには「登録処理中だよ」という合図だけ入れる
-    // セキュリティを高めるためにランダムな文字列にするのもアリ
-    location.href = `verify.html?mode=new_user`;
-});
+        // ★パス修正：一度外(Article)に出てからauthフォルダの中のverify.htmlへ
+        location.href = `../auth/verify.html?mode=new_user`;
+    });
     </script>
 </body>
 </html>

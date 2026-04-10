@@ -18,7 +18,7 @@
 
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
+            <h1 class="text-4xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
             <p class="text-gray-400 font-bold mt-2">おかえりなさい！</p>
         </div>
 
@@ -69,19 +69,17 @@
             btn.disabled = true;
 
             try {
-                // Supabaseからユーザーを探す
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('username', user)
                     .eq('password', pass)
-                    .single(); // 1件だけ取得
+                    .single();
 
                 if (error || !data) {
                     throw new Error('ユーザー名かパスワードがちがうよ！');
                 }
 
-                // ログイン成功！ ユーザー情報を保存
                 localStorage.setItem('v_user', JSON.stringify({
                     username: data.username,
                     id: data.id
@@ -91,7 +89,8 @@
                 btn.classList.replace('bg-scratch-blue', 'bg-green-500');
 
                 setTimeout(() => {
-                    location.href = 'index.html';
+                    // ★パス修正：ログイン後はトップページへ戻る
+                    location.href = '../index.html';
                 }, 1000);
 
             } catch (err) {

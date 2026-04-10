@@ -17,8 +17,8 @@
 
     <nav class="bg-scratch-blue text-white shadow-md">
         <div class="container mx-auto flex justify-between items-center px-6 py-3">
-            <h1 class="text-2xl font-black cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
-            <a href="index.html" class="font-bold text-sm hover:underline">ホームに戻る</a>
+            <h1 class="text-2xl font-black cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
+            <a href="../index.html" class="font-bold text-sm hover:underline">ホームに戻る</a>
         </div>
     </nav>
 
@@ -57,7 +57,6 @@
 
         let currentUser = null;
 
-        // 文字数カウントの連動
         document.getElementById('bioInput').addEventListener('input', (e) => {
             document.getElementById('charCount').textContent = e.target.value.length;
         });
@@ -65,11 +64,11 @@
         async function initDashboard() {
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
+                // パス修正：login.htmlは同じフォルダ内にあるのでそのまま
                 location.href = 'login.html';
                 return;
             }
             currentUser = JSON.parse(savedUser);
-            // .innerText または .textContent を使うのが鉄則
             document.getElementById('display-username').textContent = currentUser.username;
 
             const { data, error } = await supabaseClient
@@ -79,12 +78,12 @@
                 .single();
 
             if (data && data.bio) {
+                // 表示する時はエスケープを戻さず、そのままvalueに入れる（textareaはタグを解釈しないため）
                 document.getElementById('bioInput').value = data.bio;
                 document.getElementById('charCount').textContent = data.bio.length;
             }
         }
 
-        // XSS対策用：HTMLタグを無効化する関数
         function escapeHTML(str) {
             return str.replace(/[&<>"']/g, function(m) {
                 return {
@@ -101,7 +100,6 @@
             let bio = document.getElementById('bioInput').value;
             const btn = document.getElementById('saveBtn');
 
-            // 保存前にエスケープ処理を通す
             bio = escapeHTML(bio);
             
             btn.innerText = "保存中...";
@@ -122,7 +120,7 @@
             btn.disabled = false;
         }
 
-            initDashboard();
+        initDashboard();
     </script>
 </body>
 </html>
