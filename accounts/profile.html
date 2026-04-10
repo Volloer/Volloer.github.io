@@ -11,6 +11,7 @@
         .bg-scratch-blue { background-color: #4d97ff; }
         .text-scratch-blue { color: #4d97ff; }
         .bg-scratch-orange { background-color: #ffab19; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -57,11 +58,15 @@
         async function initProfile() {
             const urlParams = new URLSearchParams(window.location.search);
             targetUser = urlParams.get('u');
-            // パス修正：外側のindexに戻る
+            
+            // パス修正：ユーザー名がない場合はルートの index.html へ戻る
             if (!targetUser) { location.href = '../index.html'; return; }
 
             const { data: userData, error } = await supabaseClient.from('users').select('*').eq('username', targetUser).single();
-            if (error || !userData) { document.getElementById('profile-username').innerText = "不在"; return; }
+            if (error || !userData) { 
+                document.getElementById('profile-username').innerText = "ユーザーが見つかりません"; 
+                return; 
+            }
 
             document.getElementById('profile-username').innerText = userData.username;
             document.getElementById('profile-avatar').innerText = userData.username.charAt(0).toUpperCase();
@@ -114,10 +119,14 @@
         async function fetchUserPosts() {
             const listArea = document.getElementById('profile-post-list');
             const { data } = await supabaseClient.from('posts').select('*').eq('author', targetUser).order('created_at', { ascending: false });
-            if (!data || data.length === 0) { listArea.innerHTML = `<div class="col-span-full text-center py-10 text-gray-300">記事なし</div>`; return; }
+            
+            if (!data || data.length === 0) { 
+                listArea.innerHTML = `<div class="col-span-full text-center py-10 text-gray-300">記事はまだありません</div>`; 
+                return; 
+            }
 
             listArea.innerHTML = data.map(post => `
-                <div onclick="location.href='../view.html?id=${post.id}'" class="bg-white p-6 rounded-[2rem] border-2 border-gray-50 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                <div onclick="location.href='../Article/view.html?id=${post.id}'" class="bg-white p-6 rounded-[2rem] border-2 border-gray-50 shadow-sm hover:shadow-md transition-all cursor-pointer">
                     <h4 class="font-black mb-2 line-clamp-1">${escapeHTML(post.title)}</h4>
                     <p class="text-gray-400 text-xs line-clamp-2">${escapeHTML(post.content)}</p>
                 </div>
@@ -127,13 +136,20 @@
         function updateNavbar() {
             const navArea = document.getElementById('nav-auth-area');
             if (currentUser) {
-                // profile.html自身は同じフォルダ内なのでそのまま
-                navArea.innerHTML = `<a href="../index.html" class="hover:opacity-80">ホーム</a><a href="profile.html?u=${encodeURIComponent(currentUser.username)}" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center border border-white/20">${currentUser.username.charAt(0).toUpperCase()}</a>`;
+                // 自分自身のプロフィールを見る場合は同じフォルダ内
+                navArea.innerHTML = `
+                    <a href="../index.html" class="hover:opacity-80">ホーム</a>
+                    <a href="profile.html?u=${encodeURIComponent(currentUser.username)}" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center border border-white/20">${currentUser.username.charAt(0).toUpperCase()}</a>
+                `;
             }
         }
 
-        // パス修正：ログアウト後は外側のindexに戻る
-        function logout() { if(confirm('ログアウト？')) { localStorage.removeItem('v_user'); location.href = '../index.html'; } }
+        function logout() { 
+            if(confirm('ログアウトしてもよろしいですか？')) { 
+                localStorage.removeItem('v_user'); 
+                location.href = '../index.html'; 
+            } 
+        }
 
         initProfile();
     </script>

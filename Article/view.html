@@ -7,12 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        .bg-scratch-orange { background-color: #ffab19; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    </style>
 </head>
 <body class="bg-gray-50">
-    <nav class="bg-[#4d97ff] text-white p-4 shadow-md sticky top-0 z-50">
+    <nav class="bg-scratch-blue text-white p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center px-4">
-            <h1 class="text-xl font-black cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
-            <a href="index.html" class="text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition">戻る</a>
+            <h1 class="text-xl font-black cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
+            <a href="index.html" class="text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition">
+                <i class="fa-solid fa-arrow-left mr-1"></i> 一覧に戻る
+            </a>
         </div>
     </nav>
 
@@ -56,7 +64,7 @@
                 document.getElementById('article-content').innerHTML = `
                     <div class="text-center py-20">
                         <p class="text-gray-400 font-bold">記事が見つかりませんでした。</p>
-                        <button onclick="location.href='index.html'" class="mt-4 text-[#4d97ff] font-bold underline">ホームへ戻る</button>
+                        <button onclick="location.href='index.html'" class="mt-4 text-scratch-blue font-bold underline">一覧へ戻る</button>
                     </div>`;
                 return;
             }
@@ -64,19 +72,21 @@
             const container = document.getElementById('article-content');
             container.innerHTML = "";
 
+            // タイトル
             const titleEl = document.createElement('h1');
-            titleEl.className = "text-3xl md:text-4xl font-black mb-6 leading-tight";
+            titleEl.className = "text-3xl md:text-4xl font-black mb-6 leading-tight text-gray-800";
             titleEl.textContent = data.title;
 
+            // メタ情報（投稿者・日付）
             const metaEl = document.createElement('div');
             metaEl.className = "flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6";
             
-            // ★パス修正：profile.html は accounts フォルダの中にある
-            const profileUrl = `accounts/profile.html?u=${encodeURIComponent(data.author)}`;
+            // ★重要パス修正：accounts フォルダの中にある profile.html を指定
+            const profileUrl = `../accounts/profile.html?u=${encodeURIComponent(data.author)}`;
             
             metaEl.innerHTML = `
-                <a href="${profileUrl}" class="flex items-center gap-2 hover:text-[#4d97ff] transition group">
-                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-[#4d97ff] group-hover:text-white transition">
+                <a href="${profileUrl}" class="flex items-center gap-2 hover:text-scratch-blue transition group">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-scratch-blue group-hover:text-white transition font-black">
                         ${data.author ? data.author.charAt(0).toUpperCase() : '?'}
                     </div>
                     <span>${data.author}</span>
@@ -85,14 +95,16 @@
                 <span><i class="fa-regular fa-calendar-days mr-1"></i> ${new Date(data.created_at).toLocaleDateString()}</span>
             `;
 
+            // 本文
             const contentEl = document.createElement('div');
             contentEl.className = "prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg";
             contentEl.textContent = data.content;
 
+            // アクション（Good/Bad）
             const actionsEl = document.createElement('div');
             actionsEl.className = "mt-16 pt-8 border-t flex gap-4";
             actionsEl.innerHTML = `
-                <button onclick="updateVote('good')" class="flex items-center gap-2 bg-orange-50 text-[#ffab19] px-8 py-3 rounded-full font-black hover:scale-105 transition active:scale-95 shadow-sm border border-orange-100">
+                <button onclick="updateVote('good')" class="flex items-center gap-2 bg-orange-50 text-scratch-orange px-8 py-3 rounded-full font-black hover:scale-105 transition active:scale-95 shadow-sm border border-orange-100">
                     <i class="fa-solid fa-thumbs-up"></i> <span id="good-count">${data.good_count || 0}</span>
                 </button>
                 <button onclick="updateVote('bad')" class="flex items-center gap-2 bg-gray-50 text-gray-400 px-8 py-3 rounded-full font-black hover:scale-105 transition active:scale-95 border border-gray-100">
@@ -109,12 +121,14 @@
         async function updateVote(type) {
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
-                alert("評価するにはログインが必要です。");
+                if(confirm("評価するにはログインが必要です。ログイン画面へ移動しますか？")) {
+                    location.href = "../accounts/login.html";
+                }
                 return;
             }
             const user = JSON.parse(savedUser);
 
-            const { data: votes, error: checkError } = await supabaseClient
+            const { data: votes } = await supabaseClient
                 .from('votes')
                 .select('*')
                 .eq('post_id', currentArticleId)
@@ -127,20 +141,12 @@
             if (votes && votes.length > 0) {
                 const existingVote = votes[0];
                 if (existingVote.vote_type === type) {
-                    const { error: deleteError } = await supabaseClient
-                        .from('votes')
-                        .delete()
-                        .eq('id', existingVote.id);
-
+                    // 同じタイプなら取り消し
+                    const { error: deleteError } = await supabaseClient.from('votes').delete().eq('id', existingVote.id);
                     if (!deleteError) {
                         const newCount = Math.max(0, currentCount - 1);
-                        await supabaseClient
-                            .from('posts')
-                            .update({ [field]: newCount })
-                            .eq('id', currentArticleId);
-                        
+                        await supabaseClient.from('posts').update({ [field]: newCount }).eq('id', currentArticleId);
                         countEl.innerText = newCount;
-                        alert("評価を取り消しました。");
                     }
                 } else {
                     alert("既に別の評価をしています。取り消してから押し直してください。");
@@ -148,6 +154,7 @@
                 return;
             }
 
+            // 新規投票
             const { error: insertError } = await supabaseClient.from('votes').insert([{
                 post_id: currentArticleId,
                 username: user.username,
@@ -156,15 +163,8 @@
 
             if (!insertError) {
                 const newCount = currentCount + 1;
-                const { error: updateError } = await supabaseClient
-                    .from('posts')
-                    .update({ [field]: newCount })
-                    .eq('id', currentArticleId);
-
-                if (!updateError) {
-                    countEl.innerText = newCount;
-                    alert("投票しました！");
-                }
+                await supabaseClient.from('posts').update({ [field]: newCount }).eq('id', currentArticleId);
+                countEl.innerText = newCount;
             }
         }
 

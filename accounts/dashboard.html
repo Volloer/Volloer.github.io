@@ -97,7 +97,6 @@
                 .single();
 
             if (data && data.bio) {
-                // textareaはエスケープ不要なのでそのまま
                 document.getElementById('bioInput').value = data.bio;
                 document.getElementById('charCount').textContent = data.bio.length;
             }
@@ -128,6 +127,7 @@
         function logout() {
             if(confirm('ログアウトしてもいい？')) {
                 localStorage.removeItem('v_user');
+                // ルートの index.html へ戻る
                 location.href = '../index.html';
             }
         }

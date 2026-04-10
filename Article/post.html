@@ -18,7 +18,7 @@
 
     <nav class="bg-scratch-blue text-white shadow-md mb-8">
         <div class="container mx-auto flex justify-between items-center px-6 py-3">
-            <h1 class="text-2xl font-black tracking-tight cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
+            <h1 class="text-2xl font-black tracking-tight cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
             <a href="index.html" class="hover:bg-black/10 px-4 py-2 rounded-full font-bold transition text-sm">戻る</a>
         </div>
     </nav>
@@ -52,7 +52,7 @@
                 </div>
 
                 <button type="submit" id="submitBtn"
-                    class="w-full bg-scratch-orange hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-200 transition-all transform hover:scale-[1.02] active:scale-95 text-xl">
+                    class="w-full bg-scratch-orange hover:brightness-110 text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xl">
                     記事を公開する
                 </button>
             </form>
@@ -67,8 +67,8 @@
         window.onload = () => {
             if (!localStorage.getItem('v_user')) {
                 alert('記事を書くにはログインが必要です！');
-                // ★パス修正：login.html は accounts フォルダの中にある
-                location.href = 'accounts/login.html';
+                // ★パス修正：Article フォルダから出て accounts フォルダへ
+                location.href = '../accounts/login.html';
             }
         };
 
@@ -79,8 +79,7 @@
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
                 alert('ログインが切れているようです。もう一度ログインしてください。');
-                // ★ここもパス修正
-                location.href = 'accounts/login.html';
+                location.href = '../accounts/login.html';
                 return;
             }
             const user = JSON.parse(savedUser);
@@ -109,6 +108,7 @@
                 if (error) throw error;
 
                 alert('投稿が完了しました！');
+                // 記事一覧画面（Article/index.html）へ戻る
                 location.href = 'index.html';
 
             } catch (error) {

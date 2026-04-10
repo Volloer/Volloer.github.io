@@ -48,7 +48,7 @@
             </div>
 
             <button type="submit"
-                class="w-full bg-scratch-orange hover:brightness-110 text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xl">
+                class="w-full bg-scratch-orange text-white font-black py-4 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xl">
                 次へすすむ <i class="fa-solid fa-arrow-right ml-2"></i>
             </button>
         </form>
@@ -69,9 +69,10 @@
             username: user,
             password: pass
         };
+        // 一時的にセッションに保存して verify.html で登録を実行する
         sessionStorage.setItem('pendingUser', JSON.stringify(userData));
 
-        // ★パス修正：一度外(Article)に出てからauthフォルダの中のverify.htmlへ
+        // パス修正：accounts から外に出て auth フォルダ内の verify.html へ
         location.href = `../auth/verify.html?mode=new_user`;
     });
     </script>

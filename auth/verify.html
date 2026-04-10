@@ -53,6 +53,7 @@
 
                 const { username, password } = JSON.parse(savedData);
 
+                // Supabaseに登録
                 const { error } = await supabaseClient
                     .from('users')
                     .insert([{ username: username, password: password }]);
@@ -64,6 +65,8 @@
                     throw error;
                 }
 
+                // 登録成功したら自動でログイン状態にする（重要！）
+                localStorage.setItem('v_user', JSON.stringify({ username: username }));
                 sessionStorage.removeItem('pendingUser');
 
                 statusText.innerText = '認証成功！';
@@ -71,7 +74,7 @@
                 subText.innerText = 'Volloerへようこそ！';
 
                 setTimeout(() => {
-                    // ★パス修正：Article/index.html に戻る
+                    // ★パス修正：authフォルダから出て、ルートの index.html に戻る
                     location.href = '../index.html';
                 }, 1500);
 
@@ -81,7 +84,7 @@
                 subText.innerText = err.message;
                 
                 setTimeout(() => {
-                    // ★パス修正：Article/accounts/signup.html に戻る
+                    // ★パス修正：authフォルダから出て、accountsフォルダの signup.html に戻る
                     location.href = '../accounts/signup.html';
                 }, 3000);
             }
