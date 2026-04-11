@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Volloer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-volloer-orange { background-color: #ffab19; }
+        .text-volloer-orange { color: #ffab19; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+        #chat-container::-webkit-scrollbar { width: 6px; }
+        #chat-container::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+
+    <nav class="bg-white border-b p-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-4">
+            <button onclick="location.href='index.html'" class="text-gray-400 hover:text-volloer-orange transition">
+                <i class="fa-solid fa-chevron-left text-xl"></i>
+            </button>
+            <div id="box-info" class="flex items-center gap-3">
+                <div id="box-icon" class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">💬</div>
+                <div>
+                    <h1 id="box-title" class="font-black text-lg leading-tight">読み込み中...</h1>
+                    <p id="box-desc" class="text-[10px] text-gray-400 font-bold truncate max-w-[200px]">...</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live</span>
+        </div>
+    </nav>
+
+    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+        </div>
+
+    <div class="bg-white p-4 border-t shadow-lg">
+        <div class="container mx-auto max-w-4xl flex gap-3">
+            <input type="text" id="msg-input" placeholder="メッセージを入力..." 
+                class="flex-1 bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-3 outline-none focus:border-volloer-orange font-bold transition">
+            <button onclick="sendMessage()" class="bg-volloer-orange text-white w-12 h-12 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-md">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const params = new URLSearchParams(window.location.search);
+        const boxId = params.get('id');
+        const user = JSON.parse(localStorage.getItem('v_user'));
+
+        if (!boxId) location.href = 'index.html';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBoxInfo();
+            loadMessages();
+            subscribeMessages(); // リアルタイム監視開始
+
+            // Enterキーで送信
+            document.getElementById('msg-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        });
+
+        // BoXのタイトルとかを取得
+        async function loadBoxInfo() {
+            const { data, error } = await supabaseClient.from('boxes').select('*').eq('id', boxId).single();
+            if (data) {
+                document.getElementById('box-title').innerText = data.title;
+                document.getElementById('box-desc').innerText = data.description || '紹介文はありません';
+                document.getElementById('box-icon').innerText = data.icon_type || '💬';
+            }
+        }
+
+        // 過去のメッセージを読み込む
+        async function loadMessages() {
+            const { data, error } = await supabaseClient
+                .from('messages')
+                .select('*')
+                .eq('box_id', boxId)
+                .order('created_at', { ascending: true });
+
+            if (data) {
+                data.forEach(msg => appendMessage(msg));
+                scrollToBottom();
+            }
+        }
+
+        // リアルタイムで新着メッセージを検知
+        function subscribeMessages() {
+            supabaseClient
+                .channel('public:messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `box_id=eq.${boxId}` }, 
+                payload => {
+                    appendMessage(payload.new);
+                    scrollToBottom();
+                })
+                .subscribe();
+        }
+
+        // 画面にメッセージを追加
+        function appendMessage(msg) {
+            const container = document.getElementById('chat-container');
+            const isMe = user && msg.sender === user.username;
+
+            const div = document.createElement('div');
+            div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`;
+            div.innerHTML = `
+                <div class="${isMe ? 'bg-volloer-orange text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border'} px-4 py-2 shadow-sm max-w-[80%]">
+                    ${!isMe ? `<p class="text-[10px] font-black text-gray-400 mb-1">${msg.sender}</p>` : ''}
+                    <p class="font-bold text-sm leading-relaxed">${escapeHTML(msg.content)}</p>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        // メッセージ送信
+        async function sendMessage() {
+            const input = document.getElementById('msg-input');
+            const content = input.value.trim();
+            if (!content || !user) return;
+
+            input.value = ''; // すぐ空にする
+
+            const { error } = await supabaseClient.from('messages').insert([{
+                box_id: boxId,
+                sender: user.username,
+                content: content
+            }]);
+
+            if (error) alert("送信失敗: " + error.message);
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHTML(str) {
+            const p = document.createElement('p');
+            p.textContent = str;
+            return p.innerHTML;
+        }
+    </script>
+</body>
+</html>
