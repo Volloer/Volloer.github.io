@@ -13,11 +13,30 @@
         body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
         #chat-container::-webkit-scrollbar { width: 6px; }
         #chat-container::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+
+        /* 通知アニメーション */
+        .v-toast {
+            animation: toast-in 0.3s ease-out forwards;
+            pointer-events: auto;
+        }
+        @keyframes toast-in {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .v-toast.fade-out {
+            animation: toast-out 0.3s ease-in forwards;
+        }
+        @keyframes toast-out {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-20px); opacity: 0; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
 
-    <nav class="bg-white border-b p-4 flex items-center justify-between shadow-sm">
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <nav class="bg-white border-b p-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
         <div class="flex items-center gap-4">
             <button onclick="location.href='index.html'" class="text-gray-400 hover:text-volloer-orange transition">
                 <i class="fa-solid fa-chevron-left text-xl"></i>
@@ -31,12 +50,13 @@
             </div>
         </div>
         
-        <div onclick="location.href='../accounts/dashboard.html'" id="my-icon" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-xl shadow-inner border border-gray-100 cursor-pointer hover:scale-110 transition">
+        <div onclick="location.href='../accounts/dashboard.html'" id="my-icon" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-110 transition">
             👤
         </div>
     </nav>
 
-    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+        </div>
 
     <div class="bg-white p-4 border-t shadow-lg">
         <div class="container mx-auto max-w-4xl flex gap-3">
@@ -55,24 +75,39 @@
 
         const params = new URLSearchParams(window.location.search);
         const boxId = params.get('id');
-        const user = JSON.parse(localStorage.getItem('v_user'));
+        let user = JSON.parse(localStorage.getItem('v_user'));
 
         if (!boxId) location.href = 'index.html';
 
-        // アイコンが「絵文字1文字か？」を判定する共通関数
+        // 通知を表示する関数
+        function showMessage(text, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-scratch-blue' : 'bg-red-500'; // Scratchブルーか赤
+            
+            // 一時的にScratchブルーを適用（styleに定義がない場合のため）
+            toast.style.backgroundColor = type === 'success' ? '#4d97ff' : '#ff4d4d';
+            
+            toast.className = `text-white px-8 py-3 rounded-full font-black shadow-2xl flex items-center gap-3 v-toast min-w-[280px] justify-center`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-circle-exclamation'}"></i>
+                <span>${text}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         function getValidIcon(iconStr) {
-            if (iconStr && [...iconStr].length === 1) {
-                return iconStr;
-            }
-            return '👤';
+            return (iconStr && [...iconStr].length === 1) ? iconStr : '👤';
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // 右上のアイコン表示
             if (user) {
                 document.getElementById('my-icon').innerText = getValidIcon(user.icon);
-                
-                // 最新のアイコン情報をDBから取得して同期
                 const { data } = await supabaseClient.from('users').select('icon').eq('username', user.username).single();
                 if (data) {
                     user.icon = data.icon;
@@ -126,8 +161,6 @@
         function appendMessage(msg) {
             const container = document.getElementById('chat-container');
             const isMe = user && msg.username === user.username;
-            
-            // DBのゴミデータ対策
             const displayIcon = getValidIcon(msg.sender_icon);
 
             const div = document.createElement('div');
@@ -139,7 +172,7 @@
                 </div>
                 <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
                     ${!isMe ? `<p class="text-[10px] font-black text-gray-400 mb-1 ml-1">${msg.username}</p>` : ''}
-                    <div class="${isMe ? 'bg-volloer-orange text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border border-gray-100'} px-4 py-2 shadow-sm">
+                    <div class="${isMe ? 'bg-volloer-orange text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border border-gray-100'} px-4 py-2 shadow-sm transform transition hover:scale-[1.02]">
                         <p class="font-bold text-sm leading-relaxed whitespace-pre-wrap">${escapeHTML(msg.content)}</p>
                     </div>
                 </div>
@@ -150,17 +183,25 @@
         async function sendMessage() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
-            if (!content || !user) return;
+            
+            if (!user) {
+                showMessage("ログインしないと送れないよ！", "error");
+                return;
+            }
+            if (!content) return;
 
             input.value = '';
 
-            // 送信時も最新のアイコンを載せる
-            await supabaseClient.from('messages').insert([{
+            const { error } = await supabaseClient.from('messages').insert([{
                 box_id: boxId,
                 username: user.username,
                 sender_icon: getValidIcon(user.icon), 
                 content: content
             }]);
+
+            if (error) {
+                showMessage("送信に失敗しちゃった...", "error");
+            }
         }
 
         function scrollToBottom() {
