@@ -9,33 +9,38 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap');
         
-        body { font-family: 'Kosugi+Maru', "Helvetica Neue", Arial, sans-serif; }
+        body { font-family: 'Kosugi+Maru', sans-serif; }
         
-        /* Links専用のグリーン設定 */
+        /* 基本の緑 */
         .bg-scratch-green { background-color: #46c946; }
         .text-scratch-green { color: #46c946; }
-        .border-scratch-green { border-color: #46c946; }
-        .box-shadow-pop { box-shadow: 0 8px 0 rgba(0,0,0,0.05); }
         
+        /* アクセントのオレンジ（Scratchのイベントブロック色） */
+        .bg-scratch-orange { background-color: #ffab19; }
+        .text-scratch-orange { color: #ffab19; }
+
         .hero-pattern {
-            background-color: #46c946; /* 青から緑に変更 */
+            background-color: #46c946;
             background-image: radial-gradient(rgba(255, 255, 255, 0.2) 2px, transparent 2px);
             background-size: 30px 30px;
         }
 
-        .volloer-btn-white {
-            background: white;
-            color: #46c946; /* 文字も緑に */
-            border-bottom: 6px solid #d1f0d1; /* 影の色も薄い緑に */
+        /* ボタンは「白×緑」だと弱いから、あえて「オレンジ」で目立たせる！ */
+        .volloer-btn-accent {
+            background: #ffab19;
+            color: white;
+            border-bottom: 6px solid #cf8b15;
             border-radius: 9999px;
             transition: all 0.1s;
             display: inline-block;
         }
         
-        .volloer-btn-white:active {
+        .volloer-btn-accent:active {
             transform: translateY(4px);
             border-bottom-width: 2px;
         }
+
+        .box-shadow-pop { box-shadow: 0 12px 0 rgba(70, 201, 70, 0.1); }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -53,7 +58,9 @@
 
     <header class="hero-pattern text-white py-24 px-6 text-center">
         <div class="container mx-auto">
-            <div class="inline-block bg-white text-scratch-green px-6 py-1 rounded-full text-xs font-black mb-6 shadow-lg uppercase tracking-wider">New Service</div>
+            <div class="inline-block bg-[#ffee00] text-[#cf8b15] px-6 py-1 rounded-full text-xs font-black mb-6 shadow-lg uppercase tracking-wider">
+                <i class="fa-solid fa-star mr-1"></i> New Service
+            </div>
             <h2 class="text-4xl md:text-6xl font-black mb-6 tracking-tighter">
                 コミュニティの「今」を、<br>もっと身近に。
             </h2>
@@ -62,7 +69,7 @@
                 特設ページ作成サービスです。
             </p>
             
-            <button onclick="location.href='createpage.html'" class="volloer-btn-white px-12 py-4 font-black text-xl shadow-lg">
+            <button onclick="location.href='createpage.html'" class="volloer-btn-accent px-12 py-4 font-black text-xl shadow-xl">
                 ページを作成する
             </button>
         </div>
@@ -70,26 +77,22 @@
 
     <main class="container mx-auto px-6 py-20 max-w-4xl">
         <section class="bg-white p-12 rounded-[3rem] border-4 border-gray-100 box-shadow-pop relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-8 opacity-5">
-                <i class="fa-solid fa-link text-9xl"></i>
-            </div>
-            
-            <h3 class="text-2xl font-black mb-8 border-l-8 border-scratch-green pl-4">Linksでできること</h3>
+            <h3 class="text-2xl font-black mb-8 border-l-8 border-scratch-orange pl-4">Linksでできること</h3>
             
             <div class="grid md:grid-cols-2 gap-10 font-bold text-gray-600">
-                <div class="space-y-3">
-                    <p class="text-scratch-green text-lg flex items-center">
+                <div class="bg-green-50 p-6 rounded-3xl border-2 border-green-100">
+                    <p class="text-scratch-green text-lg flex items-center mb-3">
                         <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> かんたん作成
                     </p>
-                    <p class="text-sm leading-relaxed text-gray-400">
+                    <p class="text-sm leading-relaxed text-gray-500">
                         プログラミング不要。必要な情報を入力するだけで、Volloer標準のポップなページがすぐに手に入ります。
                     </p>
                 </div>
-                <div class="space-y-3">
-                    <p class="text-scratch-green text-lg flex items-center">
+                <div class="bg-orange-50 p-6 rounded-3xl border-2 border-orange-100">
+                    <p class="text-scratch-orange text-lg flex items-center mb-3">
                         <i class="fa-solid fa-shield-heart mr-2"></i> 公式感アップ
                     </p>
-                    <p class="text-sm leading-relaxed text-gray-400">
+                    <p class="text-sm leading-relaxed text-gray-500">
                         Volloerのデザインをそのまま使うことで、あなたのグループや活動の信頼性を高めることができます。
                     </p>
                 </div>
