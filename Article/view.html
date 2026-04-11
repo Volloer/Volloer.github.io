@@ -45,6 +45,11 @@
 
         let currentArticleId = null;
 
+        // アイコン判定用
+        function getValidIcon(iconStr) {
+            return (iconStr && [...iconStr].length === 1) ? iconStr : '👤';
+        }
+
         async function loadArticle() {
             const urlParams = new URLSearchParams(window.location.search);
             currentArticleId = urlParams.get('id');
@@ -54,6 +59,7 @@
                 return;
             }
 
+            // 記事データと投稿者のアイコンを結合して取得
             const { data, error } = await supabaseClient
                 .from('posts')
                 .select('*')
@@ -69,6 +75,14 @@
                 return;
             }
 
+            // 投稿者の最新アイコンを別途取得（ゴミデータ対策）
+            const { data: authorData } = await supabaseClient
+                .from('users')
+                .select('icon')
+                .eq('username', data.author)
+                .single();
+
+            const displayIcon = getValidIcon(authorData?.icon);
             const container = document.getElementById('article-content');
             container.innerHTML = "";
 
@@ -77,17 +91,15 @@
             titleEl.className = "text-3xl md:text-4xl font-black mb-6 leading-tight text-gray-800";
             titleEl.textContent = data.title;
 
-            // メタ情報（投稿者・日付）
+            // メタ情報
             const metaEl = document.createElement('div');
             metaEl.className = "flex items-center gap-3 mb-10 text-gray-400 text-sm font-bold border-b border-gray-50 pb-6";
-            
-            // ★重要パス修正：accounts フォルダの中にある profile.html を指定
             const profileUrl = `../accounts/profile.html?u=${encodeURIComponent(data.author)}`;
             
             metaEl.innerHTML = `
                 <a href="${profileUrl}" class="flex items-center gap-2 hover:text-scratch-blue transition group">
-                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-scratch-blue group-hover:text-white transition font-black">
-                        ${data.author ? data.author.charAt(0).toUpperCase() : '?'}
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-scratch-blue group-hover:text-white transition text-lg">
+                        ${displayIcon}
                     </div>
                     <span>${data.author}</span>
                 </a>
@@ -97,10 +109,10 @@
 
             // 本文
             const contentEl = document.createElement('div');
-            contentEl.className = "prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg";
+            contentEl.className = "prose max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap text-lg font-medium";
             contentEl.textContent = data.content;
 
-            // アクション（Good/Bad）
+            // アクション
             const actionsEl = document.createElement('div');
             actionsEl.className = "mt-16 pt-8 border-t flex gap-4";
             actionsEl.innerHTML = `
@@ -141,7 +153,6 @@
             if (votes && votes.length > 0) {
                 const existingVote = votes[0];
                 if (existingVote.vote_type === type) {
-                    // 同じタイプなら取り消し
                     const { error: deleteError } = await supabaseClient.from('votes').delete().eq('id', existingVote.id);
                     if (!deleteError) {
                         const newCount = Math.max(0, currentCount - 1);
@@ -154,7 +165,6 @@
                 return;
             }
 
-            // 新規投票
             const { error: insertError } = await supabaseClient.from('votes').insert([{
                 post_id: currentArticleId,
                 username: user.username,

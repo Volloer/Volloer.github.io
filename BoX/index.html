@@ -70,10 +70,8 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // ① とりあえず表示
             setupAuth(); 
             
-            // ② ログイン中なら最新のアイコンをDBから取ってきて更新
             const user = JSON.parse(localStorage.getItem('v_user'));
             if (user) {
                 const { data } = await supabaseClient
@@ -82,13 +80,12 @@
                     .eq('username', user.username)
                     .single();
                 
-                if (data && data.icon) {
+                if (data) {
                     user.icon = data.icon;
                     localStorage.setItem('v_user', JSON.stringify(user));
-                    setupAuth(); // アイコンを反映させて再描画
+                    setupAuth();
                 }
             }
-            
             fetchBoxes();
         });
 
@@ -97,11 +94,16 @@
             const user = JSON.parse(localStorage.getItem('v_user'));
             
             if (user) {
-                const userIcon = user.icon || '👤';
+                // ここが修正ポイント：DBにある「紫アイコン」等のゴミデータを無視して絵文字か判定
+                let displayIcon = '👤';
+                if (user.icon && [...user.icon].length === 1) {
+                    displayIcon = user.icon;
+                }
+
                 navAuth.innerHTML = `
                     <div class="flex items-center gap-3 bg-white/20 pl-1 pr-3 py-1 rounded-full border border-white/20 shadow-inner">
                         <div onclick="location.href='../accounts/dashboard.html'" class="w-8 h-8 bg-white text-volloer-orange rounded-full flex items-center justify-center text-lg cursor-pointer hover:scale-110 transition shadow-sm">
-                            ${userIcon}
+                            ${displayIcon}
                         </div>
                         <span class="font-black text-white text-sm hidden sm:inline">${user.username}</span>
                         <button onclick="logout()" class="text-[10px] text-white/60 hover:text-white font-bold ml-2">ログアウト</button>

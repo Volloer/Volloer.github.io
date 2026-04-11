@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volloer - 創造と対話のプラットフォーム</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .bg-scratch-blue { background-color: #4d97ff; }
@@ -23,19 +24,19 @@
 </head>
 <body class="bg-gray-50">
 
-    <nav class="bg-white border-b-4 border-gray-100 px-6 py-4">
+    <nav class="bg-white border-b-4 border-gray-100 px-6 py-4 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-3xl font-black text-scratch-blue tracking-tighter cursor-pointer" onclick="location.href='index.html'">Volloer</h1>
             <div id="nav-auth" class="flex gap-4 items-center">
-                <a href="accounts/login.html" class="font-bold text-gray-400 hover:text-scratch-blue transition">ログイン</a>
-                <a href="accounts/signup.html" class="bg-scratch-orange text-white px-6 py-2 rounded-full font-black shadow-lg hover:scale-105 transition">参加する</a>
+                <a href="accounts/login.html" class="font-bold text-gray-400 hover:text-scratch-blue transition text-sm">ログイン</a>
+                <a href="accounts/signup.html" class="bg-scratch-orange text-white px-6 py-2 rounded-full font-black shadow-lg hover:scale-105 transition text-sm">参加する</a>
             </div>
         </div>
     </nav>
 
-    <header class="bg-scratch-blue text-white py-20 px-6">
+    <header class="bg-scratch-blue text-white py-24 px-6">
         <div class="container mx-auto text-center">
-            <h2 class="text-5xl md:text-7xl font-black mb-6 tracking-tighter">世界をもっと、おもしろく。</h2>
+            <h2 class="text-5xl md:text-7xl font-black mb-6 tracking-tighter animate-fade-in-up">世界をもっと、おもしろく。</h2>
             <p class="text-xl md:text-2xl font-bold opacity-90 mb-10">Volloerは、知識を共有し、仲間と語り合える場所です。</p>
         </div>
     </header>
@@ -44,24 +45,24 @@
         <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             
             <div onclick="location.href='Article/index.html'" class="v-card bg-white p-10 rounded-[3rem] cursor-pointer group">
-                <div class="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-scratch-blue transition-colors">
-                    <i class="fa-solid fa-book-open text-4xl text-scratch-blue group-hover:text-white"></i>
+                <div class="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-scratch-blue transition-colors shadow-inner">
+                    <i class="fa-solid fa-book-open text-4xl text-scratch-blue group-hover:text-white transition-colors"></i>
                 </div>
-                <h3 class="text-3xl font-black mb-4">Article</h3>
+                <h3 class="text-3xl font-black mb-4 text-gray-700">Article</h3>
                 <p class="text-gray-500 font-bold leading-relaxed">あなたの知識や発見を記事にして、世界中に発信しよう。役立つ情報がここに集まります。</p>
                 <div class="mt-8 flex items-center gap-2 font-black text-scratch-blue uppercase tracking-widest text-sm">
-                    Open Article <i class="fa-solid fa-arrow-right"></i>
+                    Open Article <i class="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform"></i>
                 </div>
             </div>
 
             <div onclick="location.href='BoX/index.html'" class="v-card bg-white p-10 rounded-[3rem] cursor-pointer group">
-                <div class="w-20 h-20 bg-orange-100 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-scratch-orange transition-colors">
-                    <i class="fa-solid fa-comments text-4xl text-scratch-orange group-hover:text-white"></i>
+                <div class="w-20 h-20 bg-orange-100 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-scratch-orange transition-colors shadow-inner">
+                    <i class="fa-solid fa-comments text-4xl text-scratch-orange group-hover:text-white transition-colors"></i>
                 </div>
-                <h3 class="text-3xl font-black mb-4">BoX</h3>
+                <h3 class="text-3xl font-black mb-4 text-gray-700">BoX</h3>
                 <p class="text-gray-500 font-bold leading-relaxed">共通の趣味や目的で集まるコミュニティ。リアルタイムなチャットで仲間と繋がろう。</p>
                 <div class="mt-8 flex items-center gap-2 font-black text-scratch-orange uppercase tracking-widest text-sm">
-                    Enter BoX <i class="fa-solid fa-arrow-right"></i>
+                    Enter BoX <i class="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform"></i>
                 </div>
             </div>
 
@@ -70,22 +71,54 @@
 
     <footer class="bg-white py-12 border-t-4 border-gray-100">
         <div class="container mx-auto px-6 text-center">
-            <p class="font-black text-gray-300 uppercase tracking-[0.3em]">© 2026 Volloer Project</p>
+            <p class="font-black text-gray-300 uppercase tracking-[0.3em] text-xs">© 2026 Volloer Project</p>
         </div>
     </footer>
 
     <script>
-        const user = localStorage.getItem('v_user');
-        if (user) {
-            const userData = JSON.parse(user);
-            // パス修正: ログイン後の遷移先も accountsフォルダ内に
-            document.getElementById('nav-auth').innerHTML = `
-                <a href="accounts/dashboard.html" class="flex items-center gap-2 font-black text-gray-700 hover:text-scratch-blue transition">
-                    <i class="fa-solid fa-circle-user text-2xl"></i>
-                    <span>${userData.username}</span>
-                </a>
-            `;
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // アイコン判定用
+        function getValidIcon(iconStr) {
+            return (iconStr && [...iconStr].length === 1) ? iconStr : '👤';
         }
+
+        async function initNav() {
+            const userStr = localStorage.getItem('v_user');
+            if (userStr) {
+                let userData = JSON.parse(userStr);
+                
+                // 最新のアイコンをDBから取得
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('icon')
+                    .eq('username', userData.username)
+                    .single();
+                
+                if (!error && data) {
+                    userData.icon = data.icon;
+                    localStorage.setItem('v_user', JSON.stringify(userData));
+                }
+
+                const displayIcon = getValidIcon(userData.icon);
+                
+                document.getElementById('nav-auth').innerHTML = `
+                    <a href="accounts/dashboard.html" class="flex items-center gap-3 bg-gray-50 pl-1 pr-4 py-1 rounded-full border border-gray-200 hover:border-scratch-blue transition-all group">
+                        <div class="w-9 h-9 bg-white text-scratch-blue rounded-full flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
+                            ${displayIcon}
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-gray-400 font-bold leading-none">DASHBOARD</span>
+                            <span class="font-black text-gray-700 text-sm">${userData.username}</span>
+                        </div>
+                    </a>
+                `;
+            }
+        }
+
+        initNav();
     </script>
 </body>
 </html>
