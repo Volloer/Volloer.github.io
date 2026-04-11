@@ -17,6 +17,7 @@
         .icon-btn { transition: all 0.2s; border: 2px solid transparent; }
         .icon-btn:hover { transform: scale(1.1); background-color: #f0f7ff; }
         .icon-selected { border-color: #4d97ff !important; background-color: #f0f7ff !important; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -51,18 +52,23 @@
                     <div id="icon-grid" class="grid grid-cols-5 gap-2 max-w-sm mx-auto"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mt-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-2 border-gray-50">
                     <h3 class="font-black text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-bell text-scratch-orange"></i> 通知設定
+                        <i class="fa-solid fa-bell text-scratch-orange text-xl"></i> 通知設定
                     </h3>
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl">
                         <div>
-                            <p class="font-bold text-gray-700">メンションのハイライト</p>
-                            <p class="text-xs text-gray-400 font-bold">自分宛のメッセージを強調表示します</p>
+                            <p class="font-black text-gray-700">メンション通知</p>
+                            <p class="text-[10px] text-gray-400 font-bold leading-tight">自分宛のメッセージを光らせるぜ！<br>ONにするとブラウザから許可を求められるよ。</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="mention-toggle" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-volloer-orange"></div>
+                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer 
+                                        peer-checked:bg-scratch-blue transition-colors relative
+                                        after:content-[''] after:absolute after:top-[4px] after:left-[4px] 
+                                        after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                                        peer-checked:after:translate-x-7 shadow-inner">
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -70,13 +76,13 @@
                 <div>
                     <label class="block text-sm font-black text-gray-500 mb-2 ml-1">自己紹介 (100文字以内)</label>
                     <textarea id="bioInput" rows="3" maxlength="100"
-                        class="w-full px-5 py-4 rounded-[1.5rem] border-2 border-gray-100 focus:border-scratch-blue outline-none font-medium transition bg-gray-50"
+                        class="w-full px-5 py-4 rounded-[1.5rem] border-2 border-gray-100 focus:border-scratch-blue outline-none font-medium transition bg-gray-50 shadow-inner"
                         placeholder="Scratchやってます！など"></textarea>
                     <p class="text-right text-xs text-gray-400 mt-2 font-bold"><span id="charCount">0</span> / 100</p>
                 </div>
 
                 <button onclick="saveProfile()" id="saveBtn"
-                    class="w-full bg-scratch-orange v-btn text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:brightness-105">
+                    class="w-full bg-scratch-orange v-btn text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:brightness-105 active:scale-95">
                     プロフィールを保存
                 </button>
 
@@ -98,7 +104,7 @@
         let selectedEmoji = '👤';
         const emojis = ['👤', '🐱', '🐶', '🦊', '🐸', '🚀', '✨', '🔥', '🌈', '💎'];
 
-        // アイコン選択肢を生成
+        // --- 初期設定：アイコン生成 ---
         const iconGrid = document.getElementById('icon-grid');
         emojis.forEach(emoji => {
             const btn = document.createElement('button');
@@ -115,13 +121,37 @@
             if(btn) {
                 btn.classList.add('icon-selected');
             } else {
-                // 文字列だけで呼ばれた場合（初期化時）に対応するボタンを探して枠をつける
                 Array.from(document.querySelectorAll('.icon-btn')).forEach(b => {
                     if(b.innerText === emoji) b.classList.add('icon-selected');
                 });
             }
         }
 
+        // --- 通知許可のリクエスト ---
+        async function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("このブラウザは通知に対応してないみたいだぜ。");
+                return false;
+            }
+            let permission = Notification.permission;
+            if (permission === "default") {
+                permission = await Notification.requestPermission();
+            }
+            return permission === "granted";
+        }
+
+        // スイッチの切り替えイベント
+        document.getElementById('mention-toggle').addEventListener('change', async (e) => {
+            if (e.target.checked) {
+                const granted = await requestNotificationPermission();
+                if (!granted) {
+                    alert("ブラウザの通知設定がブロックされてるぜ！アドレスバーの横の設定から許可してくれな。");
+                    e.target.checked = false;
+                }
+            }
+        });
+
+        // --- ダッシュボード初期化 ---
         async function initDashboard() {
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
@@ -131,7 +161,6 @@
             currentUser = JSON.parse(savedUser);
             document.getElementById('display-username').textContent = currentUser.username;
 
-            // Supabaseから今のデータを取得（bio, icon, mention_accepted）
             const { data, error } = await supabaseClient
                 .from('users')
                 .select('bio, icon, mention_accepted')
@@ -139,29 +168,30 @@
                 .single();
 
             if (data) {
-                // 自己紹介の反映
                 if (data.bio) {
                     document.getElementById('bioInput').value = data.bio;
                     document.getElementById('charCount').textContent = data.bio.length;
                 }
-                // アイコンの反映
-                if (data.icon) {
-                    updatePreview(data.icon);
-                }
+                if (data.icon) updatePreview(data.icon);
                 // メンション設定の反映
                 document.getElementById('mention-toggle').checked = data.mention_accepted !== false;
             }
         }
 
+        // --- 保存処理 ---
         async function saveProfile() {
             const bio = document.getElementById('bioInput').value;
             const mentionAccepted = document.getElementById('mention-toggle').checked;
             const btn = document.getElementById('saveBtn');
 
+            // ONなのにブラウザがブロック中なら警告
+            if (mentionAccepted && Notification.permission === "denied") {
+                alert("スイッチはONにしたけど、ブラウザ側で通知がブロックされてるから届かないかもだぜ！");
+            }
+
             btn.innerText = "保存中...";
             btn.disabled = true;
 
-            // 1. Supabaseに保存（全設定をまとめてupdate）
             const { error } = await supabaseClient
                 .from('users')
                 .update({ 
@@ -174,12 +204,10 @@
             if (error) {
                 alert("エラーが発生したぜ: " + error.message);
             } else {
-                // 2. ローカルストレージも最新状態に更新
                 currentUser.bio = bio;
                 currentUser.icon = selectedEmoji;
                 currentUser.mention_accepted = mentionAccepted;
                 localStorage.setItem('v_user', JSON.stringify(currentUser));
-                
                 alert("設定をすべて更新したよ！");
             }
 
