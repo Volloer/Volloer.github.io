@@ -29,12 +29,11 @@
             <div class="flex items-center space-x-8">
                 <h1 class="text-2xl font-black cursor-pointer" onclick="location.href='../index.html'">Volloer</h1>
                 <div class="flex space-x-6 font-bold">
-                    <a href="../index.html" class="hover:opacity-80 transition">ホーム</a>
-                    <a href="../article/index.html" class="hover:opacity-80 transition">Article</a>
+                    <a href="../index.html" class="hover:opacity-80 transition text-sm">ホーム</a>
+                    <a href="../article/index.html" class="hover:opacity-80 transition text-sm">Article</a>
                 </div>
             </div>
-            <div id="nav-auth" class="flex items-center space-x-4">
-                </div>
+            <div id="nav-auth" class="flex items-center space-x-4"></div>
         </div>
     </nav>
 
@@ -62,7 +61,7 @@
                 <i class="fa-solid fa-plus-circle text-5xl mb-4"></i>
                 <span class="font-black text-xl">新しいBoXを作る</span>
             </div>
-            </div>
+        </div>
     </main>
 
     <script>
@@ -70,26 +69,46 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setupAuth();
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ① とりあえず表示
+            setupAuth(); 
+            
+            // ② ログイン中なら最新のアイコンをDBから取ってきて更新
+            const user = JSON.parse(localStorage.getItem('v_user'));
+            if (user) {
+                const { data } = await supabaseClient
+                    .from('users')
+                    .select('icon')
+                    .eq('username', user.username)
+                    .single();
+                
+                if (data && data.icon) {
+                    user.icon = data.icon;
+                    localStorage.setItem('v_user', JSON.stringify(user));
+                    setupAuth(); // アイコンを反映させて再描画
+                }
+            }
+            
             fetchBoxes();
         });
 
         function setupAuth() {
             const navAuth = document.getElementById('nav-auth');
             const user = JSON.parse(localStorage.getItem('v_user'));
+            
             if (user) {
+                const userIcon = user.icon || '👤';
                 navAuth.innerHTML = `
                     <div class="flex items-center gap-3 bg-white/20 pl-1 pr-3 py-1 rounded-full border border-white/20 shadow-inner">
-                        <div class="w-8 h-8 bg-white text-volloer-orange rounded-full flex items-center justify-center font-black text-xs">
-                            ${user.username.charAt(0).toUpperCase()}
+                        <div onclick="location.href='../accounts/dashboard.html'" class="w-8 h-8 bg-white text-volloer-orange rounded-full flex items-center justify-center text-lg cursor-pointer hover:scale-110 transition shadow-sm">
+                            ${userIcon}
                         </div>
-                        <span class="font-black text-white text-sm">${user.username}</span>
-                        <button onclick="logout()" class="text-[10px] text-white/60 hover:text-white font-bold">ログアウト</button>
+                        <span class="font-black text-white text-sm hidden sm:inline">${user.username}</span>
+                        <button onclick="logout()" class="text-[10px] text-white/60 hover:text-white font-bold ml-2">ログアウト</button>
                     </div>
                 `;
             } else {
-                navAuth.innerHTML = `<a href="../accounts/login.html" class="font-bold text-sm">ログイン</a>`;
+                navAuth.innerHTML = `<a href="../accounts/login.html" class="font-bold text-sm bg-white text-volloer-orange px-4 py-2 rounded-full shadow-sm hover:scale-105 transition">ログイン</a>`;
             }
         }
 
@@ -102,9 +121,8 @@
 
             if (error) return;
 
-            // 既存の「作成ボタン」以外をクリアして描画
-            const createBtn = listArea.firstElementChild.outerHTML;
-            listArea.innerHTML = createBtn + data.map(box => `
+            const createBtnHtml = listArea.children[0].outerHTML;
+            listArea.innerHTML = createBtnHtml + data.map(box => `
                 <div onclick="location.href='chat.html?id=${box.id}'" class="box-card bg-white p-8 rounded-[2.5rem] cursor-pointer group flex flex-col h-72 shadow-sm">
                     <div class="flex justify-between items-start mb-6">
                         <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-volloer-orange text-3xl">
@@ -114,13 +132,12 @@
                     </div>
                     <h4 class="text-2xl font-black mb-2 line-clamp-1">${escapeHTML(box.title)}</h4>
                     <p class="text-gray-400 font-bold text-sm mb-6 line-clamp-2">${escapeHTML(box.description || '')}</p>
-                    <div class="mt-auto flex justify-between items-center">
+                    <div class="mt-auto flex justify-between items-center border-t border-gray-50 pt-4">
                         <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-[8px] text-white font-black">
-                                ${box.created_by.charAt(0).toUpperCase()}
-                            </div>
-                            <span class="text-[10px] font-black text-gray-400">by ${escapeHTML(box.created_by)}</span>
+                            <div class="w-6 h-6 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center text-[10px]">👤</div>
+                            <span class="text-[10px] font-black text-gray-400 italic">by ${escapeHTML(box.created_by)}</span>
                         </div>
+                        <i class="fa-solid fa-arrow-right text-gray-200 group-hover:text-volloer-orange transition"></i>
                     </div>
                 </div>
             `).join('');
@@ -147,8 +164,10 @@
         }
 
         function logout() {
-            localStorage.removeItem('v_user');
-            location.reload();
+            if(confirm('ログアウトする？')){
+                localStorage.removeItem('v_user');
+                location.reload();
+            }
         }
     </script>
 </body>

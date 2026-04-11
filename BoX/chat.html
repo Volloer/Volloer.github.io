@@ -30,14 +30,13 @@
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live</span>
+        
+        <div onclick="location.href='../accounts/dashboard.html'" id="my-icon" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-xl shadow-inner border border-gray-100 cursor-pointer hover:scale-110 transition">
+            👤
         </div>
     </nav>
 
-    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4">
-        </div>
+    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
 
     <div class="bg-white p-4 border-t shadow-lg">
         <div class="container mx-auto max-w-4xl flex gap-3">
@@ -61,19 +60,18 @@
         if (!boxId) location.href = 'index.html';
 
         document.addEventListener('DOMContentLoaded', () => {
+            if (user && user.icon) document.getElementById('my-icon').innerText = user.icon;
             loadBoxInfo();
             loadMessages();
-            subscribeMessages(); // リアルタイム監視開始
+            subscribeMessages();
 
-            // Enterキーで送信
             document.getElementById('msg-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
         });
 
-        // BoXのタイトルとかを取得
         async function loadBoxInfo() {
-            const { data, error } = await supabaseClient.from('boxes').select('*').eq('id', boxId).single();
+            const { data } = await supabaseClient.from('boxes').select('*').eq('id', boxId).single();
             if (data) {
                 document.getElementById('box-title').innerText = data.title;
                 document.getElementById('box-desc').innerText = data.description || '紹介文はありません';
@@ -81,9 +79,8 @@
             }
         }
 
-        // 過去のメッセージを読み込む
         async function loadMessages() {
-            const { data, error } = await supabaseClient
+            const { data } = await supabaseClient
                 .from('messages')
                 .select('*')
                 .eq('box_id', boxId)
@@ -95,7 +92,6 @@
             }
         }
 
-        // リアルタイムで新着メッセージを検知
         function subscribeMessages() {
             supabaseClient
                 .channel('public:messages')
@@ -107,33 +103,41 @@
                 .subscribe();
         }
 
-        // 画面にメッセージを追加
         function appendMessage(msg) {
             const container = document.getElementById('chat-container');
-            const isMe = user && msg.sender === user.username;
+            // カラム名が username になっているので修正
+            const isMe = user && msg.username === user.username;
+            const icon = msg.sender_icon || '👤';
 
             const div = document.createElement('div');
-            div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`;
+            div.className = `flex items-end gap-2 mb-4 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
+            
             div.innerHTML = `
-                <div class="${isMe ? 'bg-volloer-orange text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border'} px-4 py-2 shadow-sm max-w-[80%]">
-                    ${!isMe ? `<p class="text-[10px] font-black text-gray-400 mb-1">${msg.sender}</p>` : ''}
-                    <p class="font-bold text-sm leading-relaxed">${escapeHTML(msg.content)}</p>
+                <div class="w-8 h-8 flex-shrink-0 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-gray-100">
+                    ${icon}
+                </div>
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
+                    ${!isMe ? `<p class="text-[10px] font-black text-gray-400 mb-1 ml-1">${msg.username}</p>` : ''}
+                    <div class="${isMe ? 'bg-volloer-orange text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border border-gray-100'} px-4 py-2 shadow-sm">
+                        <p class="font-bold text-sm leading-relaxed whitespace-pre-wrap">${escapeHTML(msg.content)}</p>
+                    </div>
                 </div>
             `;
             container.appendChild(div);
         }
 
-        // メッセージ送信
         async function sendMessage() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
             if (!content || !user) return;
 
-            input.value = ''; // すぐ空にする
+            input.value = '';
 
+            // カラム名を username に変更してエラー回避！
             const { error } = await supabaseClient.from('messages').insert([{
                 box_id: boxId,
-                sender: user.username,
+                username: user.username,
+                sender_icon: user.icon || '👤', 
                 content: content
             }]);
 
