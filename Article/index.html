@@ -149,15 +149,25 @@
 
             if (savedUser) {
                 const user = JSON.parse(savedUser);
+                
+                // まず外枠を作る
                 authArea.innerHTML = `
-                    <div class="flex items-center space-x-3 bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/20 welcome-fade">
-                        <div class="w-8 h-8 bg-scratch-orange rounded-full flex items-center justify-center font-black text-white text-xs shadow-inner">
-                            ${user.username.charAt(0).toUpperCase()}
+                    <div id="user-pill" class="flex items-center space-x-3 bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/20 welcome-fade">
+                        <div id="user-link" class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition">
+                            <div id="user-icon" class="w-8 h-8 bg-scratch-orange rounded-full flex items-center justify-center font-black text-white text-xs shadow-inner"></div>
+                            <span id="user-name-display" class="font-black text-sm text-white"></span>
                         </div>
-                        <span class="font-black text-sm">${user.username}</span>
-                        <button onclick="logout()" class="text-[10px] bg-black/10 hover:bg-black/20 px-2 py-1 rounded transition">ログアウト</button>
+                        <div class="w-px h-4 bg-white/20"></div>
+                        <button onclick="logout()" class="text-[10px] text-white/60 hover:text-white transition font-bold">ログアウト</button>
                     </div>
                 `;
+
+                // 中身を「テキスト」として安全に流し込む
+                document.getElementById('user-icon').textContent = user.username.charAt(0).toUpperCase();
+                document.getElementById('user-name-display').textContent = user.username;
+                document.getElementById('user-link').onclick = () => {
+                    location.href = '../accounts/dashboard.html';
+                };
                 heroTitle.innerHTML = `おかえりなさい、<br>${user.username} さん！`;
                 heroTitle.classList.add('welcome-fade');
                 heroDesc.innerText = "今日はどんな素晴らしい知識を共有してくれますか？";
