@@ -56,18 +56,18 @@
                     <h3 class="font-black text-gray-800 mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-bell text-scratch-orange text-xl"></i> 通知設定
                     </h3>
-                    <div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl">
+                    <div class="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
                         <div>
                             <p class="font-black text-gray-700">メンション通知</p>
                             <p class="text-[10px] text-gray-400 font-bold leading-tight">自分宛のメッセージを光らせるぜ！<br>ONにするとブラウザから許可を求められるよ。</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="mention-toggle" class="sr-only peer">
-                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer 
-                                        peer-checked:bg-scratch-blue transition-colors relative
+                            <div class="w-14 h-7 bg-gray-400 peer-focus:outline-none rounded-full peer 
+                                        peer-checked:bg-[#46c946] transition-all duration-300 relative
                                         after:content-[''] after:absolute after:top-[4px] after:left-[4px] 
                                         after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
-                                        peer-checked:after:translate-x-7 shadow-inner">
+                                        peer-checked:after:translate-x-7 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
                             </div>
                         </label>
                     </div>
@@ -104,7 +104,6 @@
         let selectedEmoji = '👤';
         const emojis = ['👤', '🐱', '🐶', '🦊', '🐸', '🚀', '✨', '🔥', '🌈', '💎'];
 
-        // --- 初期設定：アイコン生成 ---
         const iconGrid = document.getElementById('icon-grid');
         emojis.forEach(emoji => {
             const btn = document.createElement('button');
@@ -127,7 +126,6 @@
             }
         }
 
-        // --- 通知許可のリクエスト ---
         async function requestNotificationPermission() {
             if (!("Notification" in window)) {
                 alert("このブラウザは通知に対応してないみたいだぜ。");
@@ -140,7 +138,6 @@
             return permission === "granted";
         }
 
-        // スイッチの切り替えイベント
         document.getElementById('mention-toggle').addEventListener('change', async (e) => {
             if (e.target.checked) {
                 const granted = await requestNotificationPermission();
@@ -151,7 +148,6 @@
             }
         });
 
-        // --- ダッシュボード初期化 ---
         async function initDashboard() {
             const savedUser = localStorage.getItem('v_user');
             if (!savedUser) {
@@ -173,18 +169,15 @@
                     document.getElementById('charCount').textContent = data.bio.length;
                 }
                 if (data.icon) updatePreview(data.icon);
-                // メンション設定の反映
                 document.getElementById('mention-toggle').checked = data.mention_accepted !== false;
             }
         }
 
-        // --- 保存処理 ---
         async function saveProfile() {
             const bio = document.getElementById('bioInput').value;
             const mentionAccepted = document.getElementById('mention-toggle').checked;
             const btn = document.getElementById('saveBtn');
 
-            // ONなのにブラウザがブロック中なら警告
             if (mentionAccepted && Notification.permission === "denied") {
                 alert("スイッチはONにしたけど、ブラウザ側で通知がブロックされてるから届かないかもだぜ！");
             }
