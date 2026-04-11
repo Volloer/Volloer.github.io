@@ -3,62 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ページ作成 - Volloer Links</title>
+    <title>ログイン診断 - Volloer Links</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap');
-        body { font-family: 'Kosugi+Maru', sans-serif; }
-        .volloer-card { background: white; border: 4px solid #e0e0e0; border-radius: 1.5rem; }
-        .volloer-input { background: #f9f9f9; border: 3px solid #e0e0e0; border-radius: 1rem; }
-        .volloer-input:focus { outline: none; border-color: #4d97ff; background: white; }
-        .volloer-btn { background: #4d97ff; color: white; border-bottom: 6px solid #3d7acc; border-radius: 1rem; transition: all 0.1s; }
-        .volloer-btn:active { transform: translateY(4px); border-bottom-width: 2px; }
-        .volloer-btn:disabled { background: #ccc; border-bottom: 0; cursor: not-allowed; }
+        body { font-family: 'Kosugi+Maru', sans-serif; background: #f0f4f9; padding: 20px; }
+        .debug-box { background: white; border: 4px solid #e0e0e0; border-radius: 1rem; padding: 20px; max-width: 500px; margin: auto; }
     </style>
 </head>
-<body class="bg-[#f0f4f9] text-[#575e75] pb-20">
-    <nav class="bg-white border-b-4 border-[#e0e0e0] p-4 mb-8">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-black text-[#4d97ff]">Volloer <span class="text-gray-300 text-lg">Links</span></h1>
-            <a href="index.html" class="bg-gray-100 px-4 py-2 rounded-xl font-bold text-gray-500">キャンセル</a>
+<body>
+    <div class="debug-box">
+        <h1 class="text-xl font-black mb-4 text-[#4d97ff]">ログイン診断中...</h1>
+        <div id="log" class="text-sm font-bold space-y-2 text-gray-600">
+            <p>🔍 Supabaseに接続中...</p>
         </div>
-    </nav>
-
-    <div class="container mx-auto px-6 max-w-2xl">
-        <form id="createPageForm" class="space-y-6">
-            <section class="volloer-card p-6 shadow-sm">
-                <h3 class="text-lg font-black mb-6 flex items-center text-[#4d97ff]">基本情報</h3>
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-black mb-2">グループの名前</label>
-                        <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 volloer-input font-bold" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-black mb-2">カスタムURL (スラッグ)</label>
-                        <div class="flex items-center volloer-input overflow-hidden">
-                            <span class="pl-4 text-gray-400 font-bold">view.html?group=</span>
-                            <input type="text" name="slug" id="slugInput" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
-                        </div>
-                        <p id="urlError" class="text-red-500 text-xs font-bold mt-2 hidden">この名前は既につかわれています！</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="volloer-card p-6 shadow-sm">
-                <h3 class="text-lg font-black mb-6 flex items-center text-orange-500">デザイン</h3>
-                <div>
-                    <label class="block text-sm font-black mb-2">テーマカラー</label>
-                    <input type="color" name="theme_color" value="#4d97ff" class="w-16 h-16 rounded-2xl cursor-pointer">
-                </div>
-                <div class="mt-4">
-                    <label class="block text-sm font-black mb-2">紹介文</label>
-                    <textarea name="description" rows="4" class="w-full p-4 volloer-input font-bold"></textarea>
-                </div>
-            </section>
-
-            <button type="submit" id="submitBtn" class="volloer-btn px-12 py-5 text-2xl font-black w-full">公開する！</button>
-        </form>
+        <hr class="my-4">
+        <button onclick="location.reload()" class="w-full py-2 bg-gray-100 rounded-lg font-bold">再読み込み</button>
     </div>
 
     <script type="module">
@@ -67,70 +27,40 @@
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         
-        // セッション保持を強化
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true
-            }
-        });
+        const log = document.getElementById('log');
+        function addLog(msg, color = "text-gray-600") {
+            log.innerHTML += `<p class="${color}">${msg}</p>`;
+        }
 
-        document.getElementById('createPageForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const errorMsg = document.getElementById('urlError');
-            const formData = new FormData(e.target);
-            const slug = formData.get('slug');
+        try {
+            const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+                auth: { persistSession: true }
+            });
 
-            btn.disabled = true;
-            btn.innerText = "チェック中...";
-            errorMsg.classList.add('hidden');
-
-            // 1. 重複チェック (.single() ではなく .maybeSingle() を使う)
-            const { data: existingPage, error: checkError } = await supabase
-                .from('pages')
-                .select('slug')
-                .eq('slug', slug)
-                .maybeSingle();
-
-            if (existingPage) {
-                errorMsg.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerText = "公開する！";
-                return;
-            }
-
-            // 2. ユーザー取得 (getSessionを優先)
-            const { data: { session } } = await supabase.auth.getSession();
-            const user = session?.user;
-
-            if (!user) {
-                alert('ログインが確認できませんでした。ログインし直してからもう一度試して！');
-                console.error("No user found");
-                btn.disabled = false;
-                btn.innerText = "公開する！";
-                return;
-            }
-
-            // 3. 保存
-            const { error: insertError } = await supabase.from('pages').insert([{
-                user_id: user.id,
-                group_name: formData.get('group_name'),
-                slug: slug,
-                theme_color: formData.get('theme_color'),
-                description: formData.get('description')
-            }]);
-
-            if (insertError) {
-                console.error("Insert Error:", insertError);
-                alert('保存に失敗したよ: ' + insertError.message);
-                btn.disabled = false;
-                btn.innerText = "公開する！";
+            // 1. セッションチェック
+            const { data: { session }, error: sError } = await supabase.auth.getSession();
+            
+            if (session) {
+                addLog(`✅ セッション発見！`, "text-green-500");
+                addLog(`👤 User ID: ${session.user.id}`);
+                addLog(`📧 Email: ${session.user.email}`);
             } else {
-                // 成功
-                location.href = `view.html?group=${slug}`;
+                addLog(`❌ セッションが空です (null)`, "text-red-500");
+                addLog(`💡 ログインページでもう一度ログインしてみて。`);
             }
-        });
+
+            // 2. ローカルストレージの中身を確認
+            const storageKey = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+            const hasToken = localStorage.getItem(storageKey);
+            if (hasToken) {
+                addLog(`📦 LocalStorageにトークンを発見。`, "text-blue-500");
+            } else {
+                addLog(`📦 LocalStorageにトークンがありません。`, "text-red-400");
+            }
+
+        } catch (e) {
+            addLog(`💥 重大なエラー: ${e.message}`, "text-red-600");
+        }
     </script>
 </body>
 </html>
