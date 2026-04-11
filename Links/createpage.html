@@ -29,24 +29,46 @@
         <form id="createPageForm" class="space-y-6">
             <section class="volloer-card p-6 shadow-sm space-y-5">
                 <h3 class="text-lg font-black text-[#4d97ff]"><i class="fa-solid fa-id-card mr-2"></i>基本情報</h3>
-                <input type="text" name="group_name" placeholder="グループの名前" class="w-full p-4 volloer-input font-bold" required>
-                <div class="flex items-center volloer-input overflow-hidden">
-                    <span class="pl-4 text-gray-400 font-bold text-xs">view.html?group=</span>
-                    <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
+                <div>
+                    <label class="block text-sm font-black mb-2">グループの名前</label>
+                    <input type="text" name="group_name" placeholder="例: COLLORFUL－SUNNYグループ" class="w-full p-4 volloer-input font-bold" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-black mb-2">グループの肩書き（キャッチコピー）</label>
+                    <input type="text" name="tagline" placeholder="例: 次世代クリエイティブ非営利サークル" class="w-full p-4 volloer-input font-bold">
+                </div>
+                <div>
+                    <label class="block text-sm font-black mb-2">カスタムURL</label>
+                    <div class="flex items-center volloer-input overflow-hidden">
+                        <span class="pl-4 text-gray-400 font-bold text-xs">view.html?group=</span>
+                        <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
+                    </div>
                 </div>
             </section>
 
             <section class="volloer-card p-6 shadow-sm space-y-5">
-                <h3 class="text-lg font-black text-orange-500"><i class="fa-solid fa-link mr-2"></i>SNS・リンク</h3>
+                <h3 class="text-lg font-black text-orange-500"><i class="fa-solid fa-link mr-2"></i>SNS・公式サイト</h3>
                 <div id="linksContainer" class="space-y-4">
-                    <div class="link-item grid grid-cols-2 gap-2 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 relative">
-                        <input type="text" placeholder="名前 (例: YouTube)" class="p-3 volloer-input text-sm font-bold l-name">
+                    <div class="link-item grid grid-cols-2 gap-2 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100">
+                        <input type="text" placeholder="名前 (例: 公式サイト)" class="p-3 volloer-input text-sm font-bold l-name">
                         <input type="url" placeholder="URL (https://...)" class="p-3 volloer-input text-sm font-bold l-url">
                     </div>
                 </div>
                 <button type="button" id="addLinkBtn" class="w-full py-3 btn-add font-black text-sm">
                     <i class="fa-solid fa-plus mr-1"></i> リンクを追加する
                 </button>
+            </section>
+
+            <section class="volloer-card p-6 shadow-sm space-y-5">
+                <h3 class="text-lg font-black text-purple-500"><i class="fa-solid fa-palette mr-2"></i>デザイン・紹介</h3>
+                <div class="flex items-center gap-4">
+                    <label class="text-sm font-black">テーマカラー</label>
+                    <input type="color" name="theme_color" value="#4d97ff" class="w-12 h-12 rounded-xl cursor-pointer border-none bg-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-black mb-2">グループ紹介文</label>
+                    <textarea name="description" rows="4" placeholder="グループの活動内容を詳しく入力してください。" class="w-full p-4 volloer-input font-bold"></textarea>
+                </div>
             </section>
 
             <button type="submit" id="submitBtn" class="volloer-btn px-12 py-5 text-2xl font-black w-full shadow-lg">公開する！</button>
@@ -59,7 +81,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // リンク入力欄を増やす処理
+        // リンク追加ボタン
         document.getElementById('addLinkBtn').addEventListener('click', () => {
             const container = document.getElementById('linksContainer');
             const div = document.createElement('div');
@@ -76,15 +98,14 @@
             const btn = document.getElementById('submitBtn');
             const formData = new FormData(e.target);
             const vUserStr = localStorage.getItem('v_user');
-            if (!vUserStr) return alert('ログインしてください');
+            if (!vUserStr) return alert('ログインし直して！');
             const vUser = JSON.parse(vUserStr);
 
-            // リンクデータを配列にまとめる
-            const linkItems = document.querySelectorAll('.link-item');
-            const linksArray = Array.from(linkItems).map(item => ({
+            // リンク配列作成
+            const linksArray = Array.from(document.querySelectorAll('.link-item')).map(item => ({
                 label: item.querySelector('.l-name').value,
                 url: item.querySelector('.l-url').value
-            })).filter(l => l.label && l.url); // 空欄は除外
+            })).filter(l => l.label && l.url);
 
             btn.disabled = true;
             btn.innerText = "作成中...";
@@ -92,9 +113,11 @@
             const { error } = await supabase.from('pages').insert([{
                 user_id: vUser.id,
                 group_name: formData.get('group_name'),
+                tagline: formData.get('tagline'), // 肩書き追加
                 slug: formData.get('slug'),
-                links: linksArray, // JSONとして保存
-                theme_color: formData.get('theme_color') || '#4d97ff'
+                links: linksArray,
+                theme_color: formData.get('theme_color'),
+                description: formData.get('description')
             }]);
 
             if (!error) location.href = `view.html?group=${formData.get('slug')}`;

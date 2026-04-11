@@ -36,39 +36,41 @@
         </div>
     </nav>
 
-    <header id="mainHeader" class="bg-scratch-blue text-white py-16 px-6 transition-colors duration-500">
+    <header class="bg-scratch-blue text-white py-16 px-6">
         <div class="container mx-auto text-center">
             <h2 id="disp_group_name" class="text-4xl md:text-6xl font-black mb-4 tracking-tighter uppercase">---</h2>
             <div class="w-full max-w-2xl h-1 bg-white/30 mx-auto mb-6"></div>
-            <p id="disp_tagline" class="text-lg font-bold opacity-90 tracking-wide">Volloer Links 登録グループ</p>
+            <p id="disp_tagline" class="text-lg md:text-xl font-bold opacity-90 tracking-wide">---</p>
         </div>
     </header>
 
     <main id="content" class="container mx-auto px-6 py-12 max-w-4xl opacity-0 transition-opacity duration-500">
+        
         <section class="mb-12">
             <h3 class="text-2xl font-black mb-6 border-l-8 border-scratch-blue pl-4">グループ情報</h3>
             <div class="bg-white p-8 rounded-[2rem] border-4 border-gray-100 box-shadow-pop">
-                <p id="disp_description" class="text-lg font-bold text-gray-600 leading-relaxed whitespace-pre-wrap"></p>
+                <p id="disp_description" class="text-lg font-bold text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    読み込み中...
+                </p>
             </div>
         </section>
 
         <section class="text-center mb-20">
             <h3 class="text-3xl font-black mb-8 italic tracking-tight text-gray-700 underline decoration-scratch-blue decoration-8 underline-offset-8">公式リンク</h3>
-            <div id="links_area" class="bg-white p-10 rounded-[3rem] border-4 border-gray-100 box-shadow-pop divide-y-2 divide-gray-50">
+            <div id="links_area" class="bg-white p-6 md:p-10 rounded-[3rem] border-4 border-gray-100 box-shadow-pop divide-y-2 divide-gray-50">
                 </div>
         </section>
 
-        <div class="flex flex-col md:flex-row justify-center items-center gap-10 text-gray-400 font-bold text-sm bg-gray-100/50 p-8 rounded-2xl border-2 border-dashed border-gray-200">
-            <div class="text-center md:text-left">協力：<br>Volloer/DEV TEAM</div>
-            <div class="hidden md:block w-px h-10 bg-gray-200"></div>
-            <div onclick="window.open('https://volloer.github.io/contact', '_blank')" class="text-center md:text-right hover:text-scratch-blue cursor-pointer transition-colors">
-                お問い合わせはこちら
-            </div>
+        <div class="text-center text-gray-400 font-bold text-sm p-8 border-t border-gray-100 mt-20">
+            協力：Volloer/DEV TEAM
         </div>
+
     </main>
 
-    <footer class="py-12 border-t border-gray-100 text-center">
-        <p class="text-gray-400 font-black tracking-[0.3em] text-xs uppercase">© 2026 Volloer Project</p>
+    <footer class="py-12 text-center">
+        <p class="text-gray-400 font-black tracking-[0.3em] text-xs uppercase">
+            © 2026 Volloer Project
+        </p>
     </footer>
 
     <script type="module">
@@ -77,7 +79,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 安全にテキストをセットする関数
+        // 安全にテキストを挿入する関数 (XSS対策)
         const setText = (id, text) => {
             const el = document.getElementById(id);
             if (el) el.textContent = text;
@@ -90,52 +92,47 @@
             const { data, error } = await supabase.from('pages').select('*').eq('slug', slug).maybeSingle();
             
             if (error || !data) {
-                document.getElementById('loading').textContent = "ページが見つかりません！";
+                document.getElementById('loading').textContent = "ページが見つかりません。";
                 return;
             }
 
-            // テキストの安全な反映
+            // タイトルと基本情報の反映
             document.title = `${data.group_name} - Volloer`;
             setText('disp_group_name', data.group_name);
+            setText('disp_tagline', data.tagline || ""); // 肩書きをセット
             setText('disp_description', data.description || "紹介文はありません。");
             
-            // テーマカラー設定
+            // テーマカラー反映
             const themeColor = data.theme_color || '#4d97ff';
             document.documentElement.style.setProperty('--theme-color', themeColor);
 
             const area = document.getElementById('links_area');
             area.innerHTML = '';
 
-            // リンクボタンの生成（XSS対策のため createElement を使用）
-            const addSafeLink = (label, url) => {
-                const row = document.createElement('div');
-                row.className = "p-5 hover:text-scratch-blue transition cursor-pointer group";
-                
-                const p = document.createElement('p');
-                p.className = "text-xl font-black";
-                p.textContent = label; // ここでエスケープされる
-                
-                row.appendChild(p);
-                row.onclick = () => {
-                    const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
-                    window.open(cleanUrl, '_blank');
-                };
-                area.appendChild(row);
-            };
-
-            // 複数リンクの反映
-            if (data.links && Array.isArray(data.links)) {
+            // リンクの生成
+            if (data.links && Array.isArray(data.links) && data.links.length > 0) {
                 data.links.forEach(l => {
-                    if (l.label && l.url) addSafeLink(l.label, l.url);
+                    if (l.label && l.url) {
+                        const row = document.createElement('div');
+                        row.className = "p-5 hover:text-scratch-blue transition cursor-pointer group";
+                        
+                        const p = document.createElement('p');
+                        p.className = "text-xl font-black";
+                        p.textContent = l.label;
+                        
+                        row.appendChild(p);
+                        row.onclick = () => {
+                            const cleanUrl = l.url.startsWith('http') ? l.url : `https://${l.url}`;
+                            window.open(cleanUrl, '_blank');
+                        };
+                        area.appendChild(row);
+                    }
                 });
-            } else if (data.site_url) {
-                addSafeLink("公式サイト", data.site_url);
+            } else {
+                area.innerHTML = '<p class="text-gray-400 font-bold p-5">公開されているリンクはありません。</p>';
             }
 
-            // Volloer固定リンク
-            addSafeLink("Volloerについて", "https://volloer.github.io");
-
-            // 表示
+            // フェードイン表示
             document.getElementById('loading').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('loading').classList.add('hidden');
