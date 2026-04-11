@@ -7,118 +7,102 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .bg-scratch-blue { background-color: #4d97ff; }
-        .text-scratch-blue { color: #4d97ff; }
-        .input-focus:focus { outline: none; border-color: #4d97ff; box-shadow: 0 0 0 4px rgba(77, 151, 255, 0.2); }
+        @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap');
+        body { font-family: 'Kosugi+Maru', sans-serif; }
+        .volloer-card { background: white; border: 4px solid #e0e0e0; border-radius: 1.5rem; }
+        .volloer-input { background: #f9f9f9; border: 3px solid #e0e0e0; border-radius: 1rem; }
+        .volloer-input:focus { outline: none; border-color: #4d97ff; background: white; }
+        .volloer-btn { background: #4d97ff; color: white; border-bottom: 6px solid #3d7acc; border-radius: 1rem; }
+        .volloer-btn:active { transform: translateY(4px); border-bottom-width: 2px; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 pb-20">
-
-    <nav class="bg-white border-b-4 border-gray-100 p-4 mb-8">
+<body class="bg-[#f0f4f9] text-[#575e75] pb-20">
+    <nav class="bg-white border-b-4 border-[#e0e0e0] p-4 mb-8">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black text-scratch-blue">Volloer <span class="text-gray-400">Links</span></h1>
-            <a href="index.html" class="text-sm font-bold text-gray-400 hover:text-gray-600">キャンセル</a>
+            <h1 class="text-2xl font-black text-[#4d97ff]">Volloer <span class="text-gray-300 text-lg">Links</span></h1>
+            <a href="index.html" class="bg-gray-100 px-4 py-2 rounded-xl font-bold text-gray-500">キャンセル</a>
         </div>
     </nav>
 
     <div class="container mx-auto px-6 max-w-2xl">
-        <header class="mb-10 text-center">
-            <h2 class="text-3xl font-black mb-2">新しいページを作る</h2>
-            <p class="text-gray-400 font-bold">あなたのコミュニティの情報を入力しましょう。</p>
-        </header>
-
-        <form id="createPageForm" class="space-y-8">
-            <section class="bg-white p-8 rounded-[2rem] border-4 border-gray-100 shadow-sm">
-                <h3 class="text-lg font-black mb-6 text-gray-700 flex items-center">
-                    <i class="fa-solid fa-id-card mr-2 text-scratch-blue"></i> 基本情報
-                </h3>
-                <div class="space-y-6">
+        <form id="createPageForm" class="space-y-6">
+            <section class="volloer-card p-6 shadow-sm">
+                <h3 class="text-lg font-black mb-6 flex items-center text-[#4d97ff]">基本情報</h3>
+                <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-black mb-2 text-gray-500">グループ名</label>
-                        <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 bg-gray-50 border-4 border-transparent rounded-2xl font-bold input-focus transition-all" required>
+                        <label class="block text-sm font-black mb-2">グループの名前</label>
+                        <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 volloer-input font-bold" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-black mb-2 text-gray-500">カスタムURL (スラッグ)</label>
-                        <div class="flex items-center bg-gray-50 rounded-2xl border-4 border-transparent overflow-hidden focus-within:border-scratch-blue transition-all">
-                            <span class="pl-4 text-gray-400 font-bold text-sm">links/</span>
-                            <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
+                        <label class="block text-sm font-black mb-2">カスタムURL (スラッグ)</label>
+                        <div class="flex items-center volloer-input overflow-hidden">
+                            <span class="pl-4 text-gray-400 font-bold">view.html?group=</span>
+                            <input type="text" name="slug" id="slugInput" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
                         </div>
+                        <p id="urlError" class="text-red-500 text-xs font-bold mt-2 hidden">この名前は既につかわれています！</p>
                     </div>
                 </div>
             </section>
 
-            <section class="bg-white p-8 rounded-[2rem] border-4 border-gray-100 shadow-sm">
-                <h3 class="text-lg font-black mb-6 text-gray-700 flex items-center">
-                    <i class="fa-solid fa-palette mr-2 text-orange-500"></i> デザイン・詳細
-                </h3>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-black mb-2 text-gray-500">テーマカラー</label>
-                        <input type="color" name="theme_color" value="#4d97ff" class="w-16 h-16 rounded-xl cursor-pointer border-4 border-gray-100">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-black mb-2 text-gray-500">紹介文</label>
-                        <textarea name="description" rows="4" placeholder="活動内容を自由に書いてください。" class="w-full p-4 bg-gray-50 border-4 border-transparent rounded-2xl font-bold input-focus transition-all"></textarea>
-                    </div>
+            <section class="volloer-card p-6 shadow-sm">
+                <h3 class="text-lg font-black mb-6 flex items-center text-orange-500">デザイン</h3>
+                <div>
+                    <label class="block text-sm font-black mb-2">テーマカラー</label>
+                    <input type="color" name="theme_color" value="#4d97ff" class="w-16 h-16 rounded-2xl cursor-pointer">
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-black mb-2">紹介文</label>
+                    <textarea name="description" rows="4" class="w-full p-4 volloer-input font-bold"></textarea>
                 </div>
             </section>
 
-            <div class="text-center pt-6">
-                <button type="submit" class="bg-scratch-blue text-white px-16 py-5 rounded-full font-black text-xl shadow-[0_6px_0_#3d7acc] hover:translate-y-1 hover:shadow-[0_2px_0_#3d7acc] transition-all">
-                    この内容で公開する
-                </button>
-            </div>
+            <button type="submit" id="submitBtn" class="volloer-btn px-12 py-5 text-2xl font-black w-full">公開する！</button>
         </form>
     </div>
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
         document.getElementById('createPageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('submitBtn');
+            const errorMsg = document.getElementById('urlError');
+            const formData = new FormData(e.target);
+            const slug = formData.get('slug');
+
             btn.disabled = true;
-            btn.innerText = '作成中...';
+            errorMsg.classList.add('hidden');
 
-            // 1. ログインユーザーの確認（TesterさんたちのIDを取る）
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            // 1. 重複チェック
+            const { data: existingPage } = await supabase
+                .from('pages')
+                .select('slug')
+                .eq('slug', slug)
+                .single();
 
-            if (authError || !user) {
-                alert('ログインが必要です。先にログインしてください。');
+            if (existingPage) {
+                errorMsg.classList.remove('hidden');
                 btn.disabled = false;
-                btn.innerText = 'この内容で公開する';
                 return;
             }
 
-            // 2. フォームデータの取得
-            const formData = new FormData(e.target);
-            const pageData = {
-                user_id: user.id, // これで既存のusers.id(uuid)と紐付く
+            // 2. ユーザー取得 & 保存
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return alert('ログインしてください');
+
+            const { error } = await supabase.from('pages').insert([{
+                user_id: user.id,
                 group_name: formData.get('group_name'),
-                slug: formData.get('slug'),
-                catchphrase: formData.get('catchphrase'),
-                description: formData.get('description'),
-                theme_color: formData.get('theme_color')
-            };
+                slug: slug,
+                theme_color: formData.get('theme_color'),
+                description: formData.get('description')
+            }]);
 
-            // 3. Supabaseのpagesテーブルへ保存
-            const { data, error } = await supabase
-                .from('pages')
-                .insert([pageData]);
-
-            if (error) {
-                console.error('Save Error:', error);
-                alert('エラー: ' + error.message);
-                btn.disabled = false;
-                btn.innerText = 'この内容で公開する';
-            } else {
-                alert('ページが正常に作成されました！');
-                location.href = 'index.html';
-            }
+            if (!error) location.href = `view.html?group=${slug}`;
+            else btn.disabled = false;
         });
     </script>
 </body>
