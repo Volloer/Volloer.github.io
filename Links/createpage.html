@@ -14,14 +14,14 @@
         .volloer-input:focus { outline: none; border-color: #4d97ff; background: white; }
         .volloer-btn { background: #4d97ff; color: white; border-bottom: 6px solid #3d7acc; border-radius: 1rem; transition: all 0.1s; }
         .volloer-btn:active { transform: translateY(4px); border-bottom-width: 2px; }
-        .volloer-btn:disabled { background: #ccc; border-bottom: 0; cursor: not-allowed; }
+        .btn-add { border: 3px dashed #e0e0e0; border-radius: 1rem; color: #aaa; transition: all 0.2s; }
+        .btn-add:hover { border-color: #4d97ff; color: #4d97ff; background: #f0f7ff; }
     </style>
 </head>
 <body class="bg-[#f0f4f9] text-[#575e75] pb-20">
     <nav class="bg-white border-b-4 border-[#e0e0e0] p-4 mb-8">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-black text-[#4d97ff] cursor-pointer" onclick="location.href='index.html'">Volloer <span class="text-gray-300 text-lg">Links</span></h1>
-            <a href="index.html" class="bg-gray-100 px-4 py-2 rounded-xl font-bold text-gray-500">キャンセル</a>
         </div>
     </nav>
 
@@ -29,116 +29,76 @@
         <form id="createPageForm" class="space-y-6">
             <section class="volloer-card p-6 shadow-sm space-y-5">
                 <h3 class="text-lg font-black text-[#4d97ff]"><i class="fa-solid fa-id-card mr-2"></i>基本情報</h3>
-                <div>
-                    <label class="block text-sm font-black mb-2">グループの名前</label>
-                    <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 volloer-input font-bold" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-black mb-2">カスタムURL (スラッグ)</label>
-                    <div class="flex items-center volloer-input overflow-hidden">
-                        <span class="pl-4 text-gray-400 font-bold text-xs md:text-base">view.html?group=</span>
-                        <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
-                    </div>
-                    <p id="urlError" class="text-red-500 text-xs font-bold mt-2 hidden">この名前は既につかわれています！</p>
+                <input type="text" name="group_name" placeholder="グループの名前" class="w-full p-4 volloer-input font-bold" required>
+                <div class="flex items-center volloer-input overflow-hidden">
+                    <span class="pl-4 text-gray-400 font-bold text-xs">view.html?group=</span>
+                    <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
                 </div>
             </section>
 
             <section class="volloer-card p-6 shadow-sm space-y-5">
-                <h3 class="text-lg font-black text-orange-500"><i class="fa-solid fa-link mr-2"></i>公式リンク</h3>
-                <div>
-                    <label class="block text-sm font-black mb-2">公式サイトのURL</label>
-                    <input type="url" name="site_url" placeholder="https://example.com" class="w-full p-4 volloer-input font-bold">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t-2 border-gray-50 pt-4">
-                    <div>
-                        <label class="block text-sm font-black mb-2">SNSの種類</label>
-                        <input type="text" name="sns_name" placeholder="例: 公式X / Discord" class="w-full p-4 volloer-input font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-black mb-2">SNSのURL</label>
-                        <input type="url" name="sns_url" placeholder="https://x.com/..." class="w-full p-4 volloer-input font-bold">
+                <h3 class="text-lg font-black text-orange-500"><i class="fa-solid fa-link mr-2"></i>SNS・リンク</h3>
+                <div id="linksContainer" class="space-y-4">
+                    <div class="link-item grid grid-cols-2 gap-2 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 relative">
+                        <input type="text" placeholder="名前 (例: YouTube)" class="p-3 volloer-input text-sm font-bold l-name">
+                        <input type="url" placeholder="URL (https://...)" class="p-3 volloer-input text-sm font-bold l-url">
                     </div>
                 </div>
+                <button type="button" id="addLinkBtn" class="w-full py-3 btn-add font-black text-sm">
+                    <i class="fa-solid fa-plus mr-1"></i> リンクを追加する
+                </button>
             </section>
 
-            <section class="volloer-card p-6 shadow-sm space-y-5">
-                <h3 class="text-lg font-black text-purple-500"><i class="fa-solid fa-palette mr-2"></i>デザイン・紹介</h3>
-                <div class="flex items-center gap-4">
-                    <label class="text-sm font-black">テーマカラー</label>
-                    <input type="color" name="theme_color" value="#4d97ff" class="w-12 h-12 rounded-xl cursor-pointer border-none bg-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-black mb-2">紹介文</label>
-                    <textarea name="description" rows="3" placeholder="グループの活動内容を教えてください！" class="w-full p-4 volloer-input font-bold"></textarea>
-                </div>
-            </section>
-
-            <button type="submit" id="submitBtn" class="volloer-btn px-12 py-5 text-2xl font-black w-full">公開する！</button>
+            <button type="submit" id="submitBtn" class="volloer-btn px-12 py-5 text-2xl font-black w-full shadow-lg">公開する！</button>
         </form>
     </div>
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-        
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // リンク入力欄を増やす処理
+        document.getElementById('addLinkBtn').addEventListener('click', () => {
+            const container = document.getElementById('linksContainer');
+            const div = document.createElement('div');
+            div.className = "link-item grid grid-cols-2 gap-2 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100";
+            div.innerHTML = `
+                <input type="text" placeholder="名前" class="p-3 volloer-input text-sm font-bold l-name">
+                <input type="url" placeholder="URL" class="p-3 volloer-input text-sm font-bold l-url">
+            `;
+            container.appendChild(div);
+        });
+
         document.getElementById('createPageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            const errorMsg = document.getElementById('urlError');
             const formData = new FormData(e.target);
-            const slug = formData.get('slug');
-
-            // --- ログインチェック (お前の独自方式 v_user を使う) ---
             const vUserStr = localStorage.getItem('v_user');
-            if (!vUserStr) {
-                alert('ログイン情報が見つかりません。ログインし直してください！');
-                location.href = '../login.html';
-                return;
-            }
+            if (!vUserStr) return alert('ログインしてください');
             const vUser = JSON.parse(vUserStr);
+
+            // リンクデータを配列にまとめる
+            const linkItems = document.querySelectorAll('.link-item');
+            const linksArray = Array.from(linkItems).map(item => ({
+                label: item.querySelector('.l-name').value,
+                url: item.querySelector('.l-url').value
+            })).filter(l => l.label && l.url); // 空欄は除外
 
             btn.disabled = true;
             btn.innerText = "作成中...";
-            errorMsg.classList.add('hidden');
 
-            // 1. URLの重複チェック
-            const { data: existingPage } = await supabase
-                .from('pages')
-                .select('slug')
-                .eq('slug', slug)
-                .maybeSingle();
-
-            if (existingPage) {
-                errorMsg.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerText = "公開する！";
-                return;
-            }
-
-            // 2. データの保存 (site_url, sns_name, sns_url を追加)
-            const { error: insertError } = await supabase.from('pages').insert([{
+            const { error } = await supabase.from('pages').insert([{
                 user_id: vUser.id,
                 group_name: formData.get('group_name'),
-                slug: slug,
-                site_url: formData.get('site_url'),
-                sns_name: formData.get('sns_name'),
-                sns_url: formData.get('sns_url'),
-                theme_color: formData.get('theme_color'),
-                description: formData.get('description')
+                slug: formData.get('slug'),
+                links: linksArray, // JSONとして保存
+                theme_color: formData.get('theme_color') || '#4d97ff'
             }]);
 
-            if (insertError) {
-                console.error(insertError);
-                alert('保存に失敗しました: ' + insertError.message);
-                btn.disabled = false;
-                btn.innerText = "公開する！";
-            } else {
-                // 成功したら view.html?group=xxxx へ
-                location.href = `view.html?group=${slug}`;
-            }
+            if (!error) location.href = `view.html?group=${formData.get('slug')}`;
+            else { alert(error.message); btn.disabled = false; }
         });
     </script>
 </body>
