@@ -12,7 +12,7 @@
         .volloer-card { background: white; border: 4px solid #e0e0e0; border-radius: 1.5rem; }
         .volloer-input { background: #f9f9f9; border: 3px solid #e0e0e0; border-radius: 1rem; }
         .volloer-input:focus { outline: none; border-color: #4d97ff; background: white; }
-        .volloer-btn { background: #4d97ff; color: white; border-bottom: 6px solid #3d7acc; border-radius: 1rem; }
+        .volloer-btn { background: #4d97ff; color: white; border-bottom: 6px solid #3d7acc; border-radius: 1rem; transition: all 0.1s; }
         .volloer-btn:active { transform: translateY(4px); border-bottom-width: 2px; }
         .volloer-btn:disabled { background: #ccc; border-bottom: 0; cursor: not-allowed; }
     </style>
@@ -20,40 +20,56 @@
 <body class="bg-[#f0f4f9] text-[#575e75] pb-20">
     <nav class="bg-white border-b-4 border-[#e0e0e0] p-4 mb-8">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-black text-[#4d97ff]">Volloer <span class="text-gray-300 text-lg">Links</span></h1>
+            <h1 class="text-2xl font-black text-[#4d97ff] cursor-pointer" onclick="location.href='index.html'">Volloer <span class="text-gray-300 text-lg">Links</span></h1>
             <a href="index.html" class="bg-gray-100 px-4 py-2 rounded-xl font-bold text-gray-500">キャンセル</a>
         </div>
     </nav>
 
     <div class="container mx-auto px-6 max-w-2xl">
         <form id="createPageForm" class="space-y-6">
-            <section class="volloer-card p-6 shadow-sm">
-                <h3 class="text-lg font-black mb-6 flex items-center text-[#4d97ff]">基本情報</h3>
-                <div class="space-y-5">
+            <section class="volloer-card p-6 shadow-sm space-y-5">
+                <h3 class="text-lg font-black text-[#4d97ff]"><i class="fa-solid fa-id-card mr-2"></i>基本情報</h3>
+                <div>
+                    <label class="block text-sm font-black mb-2">グループの名前</label>
+                    <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 volloer-input font-bold" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-black mb-2">カスタムURL (スラッグ)</label>
+                    <div class="flex items-center volloer-input overflow-hidden">
+                        <span class="pl-4 text-gray-400 font-bold text-xs md:text-base">view.html?group=</span>
+                        <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
+                    </div>
+                    <p id="urlError" class="text-red-500 text-xs font-bold mt-2 hidden">この名前は既につかわれています！</p>
+                </div>
+            </section>
+
+            <section class="volloer-card p-6 shadow-sm space-y-5">
+                <h3 class="text-lg font-black text-orange-500"><i class="fa-solid fa-link mr-2"></i>公式リンク</h3>
+                <div>
+                    <label class="block text-sm font-black mb-2">公式サイトのURL</label>
+                    <input type="url" name="site_url" placeholder="https://example.com" class="w-full p-4 volloer-input font-bold">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t-2 border-gray-50 pt-4">
                     <div>
-                        <label class="block text-sm font-black mb-2">グループの名前</label>
-                        <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 volloer-input font-bold" required>
+                        <label class="block text-sm font-black mb-2">SNSの種類</label>
+                        <input type="text" name="sns_name" placeholder="例: 公式X / Discord" class="w-full p-4 volloer-input font-bold">
                     </div>
                     <div>
-                        <label class="block text-sm font-black mb-2">カスタムURL (スラッグ)</label>
-                        <div class="flex items-center volloer-input overflow-hidden">
-                            <span class="pl-4 text-gray-400 font-bold">view.html?group=</span>
-                            <input type="text" name="slug" id="slugInput" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
-                        </div>
-                        <p id="urlError" class="text-red-500 text-xs font-bold mt-2 hidden">この名前は既につかわれています！</p>
+                        <label class="block text-sm font-black mb-2">SNSのURL</label>
+                        <input type="url" name="sns_url" placeholder="https://x.com/..." class="w-full p-4 volloer-input font-bold">
                     </div>
                 </div>
             </section>
 
-            <section class="volloer-card p-6 shadow-sm">
-                <h3 class="text-lg font-black mb-6 flex items-center text-orange-500">デザイン</h3>
-                <div>
-                    <label class="block text-sm font-black mb-2">テーマカラー</label>
-                    <input type="color" name="theme_color" value="#4d97ff" class="w-16 h-16 rounded-2xl cursor-pointer">
+            <section class="volloer-card p-6 shadow-sm space-y-5">
+                <h3 class="text-lg font-black text-purple-500"><i class="fa-solid fa-palette mr-2"></i>デザイン・紹介</h3>
+                <div class="flex items-center gap-4">
+                    <label class="text-sm font-black">テーマカラー</label>
+                    <input type="color" name="theme_color" value="#4d97ff" class="w-12 h-12 rounded-xl cursor-pointer border-none bg-transparent">
                 </div>
-                <div class="mt-4">
+                <div>
                     <label class="block text-sm font-black mb-2">紹介文</label>
-                    <textarea name="description" rows="4" class="w-full p-4 volloer-input font-bold"></textarea>
+                    <textarea name="description" rows="3" placeholder="グループの活動内容を教えてください！" class="w-full p-4 volloer-input font-bold"></textarea>
                 </div>
             </section>
 
@@ -63,6 +79,7 @@
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+        
         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -74,20 +91,20 @@
             const formData = new FormData(e.target);
             const slug = formData.get('slug');
 
-            btn.disabled = true;
-            btn.innerText = "チェック中...";
-            errorMsg.classList.add('hidden');
-
-            // 1. お前のログイン方式（localStorageのv_user）を確認
+            // --- ログインチェック (お前の独自方式 v_user を使う) ---
             const vUserStr = localStorage.getItem('v_user');
             if (!vUserStr) {
-                alert('ログインしてください！');
-                location.href = '../login.html'; // ログインページへ飛ばす
+                alert('ログイン情報が見つかりません。ログインし直してください！');
+                location.href = '../login.html';
                 return;
             }
             const vUser = JSON.parse(vUserStr);
 
-            // 2. 重複チェック
+            btn.disabled = true;
+            btn.innerText = "作成中...";
+            errorMsg.classList.add('hidden');
+
+            // 1. URLの重複チェック
             const { data: existingPage } = await supabase
                 .from('pages')
                 .select('slug')
@@ -101,22 +118,26 @@
                 return;
             }
 
-            // 3. 保存 (user_id に vUser.id を使う)
-            const { error } = await supabase.from('pages').insert([{
+            // 2. データの保存 (site_url, sns_name, sns_url を追加)
+            const { error: insertError } = await supabase.from('pages').insert([{
                 user_id: vUser.id,
                 group_name: formData.get('group_name'),
                 slug: slug,
+                site_url: formData.get('site_url'),
+                sns_name: formData.get('sns_name'),
+                sns_url: formData.get('sns_url'),
                 theme_color: formData.get('theme_color'),
                 description: formData.get('description')
             }]);
 
-            if (!error) {
-                location.href = `view.html?group=${slug}`;
-            } else {
-                console.error(error);
-                alert('エラーが発生したよ：' + error.message);
+            if (insertError) {
+                console.error(insertError);
+                alert('保存に失敗しました: ' + insertError.message);
                 btn.disabled = false;
                 btn.innerText = "公開する！";
+            } else {
+                // 成功したら view.html?group=xxxx へ
+                location.href = `view.html?group=${slug}`;
             }
         });
     </script>
