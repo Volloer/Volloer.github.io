@@ -11,6 +11,7 @@
         .bg-scratch-blue { background-color: #4d97ff; }
         .text-scratch-blue { color: #4d97ff; }
         .bg-scratch-orange { background-color: #ffab19; }
+        .bg-volloer-orange { background-color: #ffab19; }
         .v-btn { border-bottom: 4px solid rgba(0,0,0,0.2); transition: all 0.1s; }
         .v-btn:active { border-bottom-width: 0; transform: translateY(4px); }
         .icon-btn { transition: all 0.2s; border: 2px solid transparent; }
@@ -47,8 +48,23 @@
                         <i class="fa-solid fa-face-smile text-scratch-blue"></i> マイアイコン
                     </h3>
                     <div id="user-icon-preview" class="w-20 h-20 bg-scratch-blue text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-lg">👤</div>
-                    <div id="icon-grid" class="grid grid-cols-5 gap-2 max-w-sm mx-auto">
+                    <div id="icon-grid" class="grid grid-cols-5 gap-2 max-w-sm mx-auto"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mt-6">
+                    <h3 class="font-black text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-scratch-orange"></i> 通知設定
+                    </h3>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-gray-700">メンションのハイライト</p>
+                            <p class="text-xs text-gray-400 font-bold">自分宛のメッセージを強調表示します</p>
                         </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="mention-toggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-volloer-orange"></div>
+                        </label>
+                    </div>
                 </div>
 
                 <div>
@@ -96,7 +112,14 @@
             selectedEmoji = emoji;
             document.getElementById('user-icon-preview').innerText = emoji;
             document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('icon-selected'));
-            if(btn) btn.classList.add('icon-selected');
+            if(btn) {
+                btn.classList.add('icon-selected');
+            } else {
+                // 文字列だけで呼ばれた場合（初期化時）に対応するボタンを探して枠をつける
+                Array.from(document.querySelectorAll('.icon-btn')).forEach(b => {
+                    if(b.innerText === emoji) b.classList.add('icon-selected');
+                });
+            }
         }
 
         async function initDashboard() {
@@ -108,50 +131,56 @@
             currentUser = JSON.parse(savedUser);
             document.getElementById('display-username').textContent = currentUser.username;
 
-            // Supabaseから今のデータを取得（bioとicon）
+            // Supabaseから今のデータを取得（bio, icon, mention_accepted）
             const { data, error } = await supabaseClient
                 .from('users')
-                .select('bio, icon')
+                .select('bio, icon, mention_accepted')
                 .eq('username', currentUser.username)
                 .single();
 
             if (data) {
+                // 自己紹介の反映
                 if (data.bio) {
                     document.getElementById('bioInput').value = data.bio;
                     document.getElementById('charCount').textContent = data.bio.length;
                 }
+                // アイコンの反映
                 if (data.icon) {
                     updatePreview(data.icon);
-                    // 初期選択状態の枠線をつける
-                    Array.from(document.querySelectorAll('.icon-btn')).find(b => b.innerText === data.icon)?.classList.add('icon-selected');
                 }
+                // メンション設定の反映
+                document.getElementById('mention-toggle').checked = data.mention_accepted !== false;
             }
         }
 
         async function saveProfile() {
             const bio = document.getElementById('bioInput').value;
+            const mentionAccepted = document.getElementById('mention-toggle').checked;
             const btn = document.getElementById('saveBtn');
 
             btn.innerText = "保存中...";
             btn.disabled = true;
 
-            // 1. Supabaseに保存
+            // 1. Supabaseに保存（全設定をまとめてupdate）
             const { error } = await supabaseClient
                 .from('users')
                 .update({ 
                     bio: bio,
-                    icon: selectedEmoji 
+                    icon: selectedEmoji,
+                    mention_accepted: mentionAccepted
                 })
                 .eq('username', currentUser.username);
 
             if (error) {
                 alert("エラーが発生したぜ: " + error.message);
             } else {
-                // 2. ローカルストレージも更新（ナビとかの表示用）
+                // 2. ローカルストレージも最新状態に更新
                 currentUser.bio = bio;
                 currentUser.icon = selectedEmoji;
+                currentUser.mention_accepted = mentionAccepted;
                 localStorage.setItem('v_user', JSON.stringify(currentUser));
-                alert("プロフィールとアイコンを更新したよ！");
+                
+                alert("設定をすべて更新したよ！");
             }
 
             btn.innerText = "プロフィールを保存";
