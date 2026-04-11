@@ -3,70 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>読み込み中... - Volloer Links</title>
+    <title>ページ作成 - Volloer Links</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap');
         body { font-family: 'Kosugi+Maru', sans-serif; }
-        
-        .volloer-card {
-            background: white;
-            border: 4px solid #e0e0e0;
-            border-radius: 2rem;
-        }
-        
-        :root { --theme-color: #4d97ff; }
-        .bg-theme { background-color: var(--theme-color); }
-        .text-theme { color: var(--theme-color); }
-        .border-theme { border-color: var(--theme-color); }
-
-        /* スケルトンアニメーション */
-        .loading-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .volloer-card { background: white; border: 4px solid #e0e0e0; border-radius: 1.5rem; }
+        .volloer-input { background: #f9f9f9; border: 3px solid #e0e0e0; border-radius: 1rem; }
+        .volloer-input:focus { outline: none; border-color: #4d97ff; background: white; }
+        .volloer-btn { background: #4d97ff; color: white; border-bottom: 6px solid #3d7acc; border-radius: 1rem; }
+        .volloer-btn:disabled { background: #ccc; border-bottom: 0; cursor: not-allowed; }
     </style>
 </head>
-<body class="bg-[#f0f4f9] text-[#575e75] min-h-screen">
+<body class="bg-[#f0f4f9] text-[#575e75] pb-20">
 
     <nav class="bg-white border-b-4 border-[#e0e0e0] p-4 mb-8">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black text-theme cursor-pointer" onclick="location.href='index.html'">
-                Volloer <span class="text-gray-300">Links</span>
-            </h1>
-            <button onclick="location.href='index.html'" class="text-sm font-bold text-gray-400">ホームへ</button>
+            <h1 class="text-2xl font-black text-[#4d97ff]">Volloer <span class="text-gray-300 text-lg">Links</span></h1>
+            <a href="index.html" class="bg-gray-100 px-4 py-2 rounded-xl font-bold text-gray-500">キャンセル</a>
         </div>
     </nav>
 
-    <div id="loading" class="text-center py-20">
-        <div class="animate-spin inline-block w-12 h-12 border-4 border-theme border-t-transparent rounded-full mb-4"></div>
-        <p class="font-bold text-gray-400">ページをさがしています...</p>
-    </div>
+    <div class="container mx-auto px-6 max-w-2xl">
+        <form id="createPageForm" class="space-y-6">
+            <section class="volloer-card p-6 shadow-sm">
+                <h3 class="text-lg font-black mb-6 text-[#4d97ff]">基本情報</h3>
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-black mb-2">グループの名前</label>
+                        <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 volloer-input font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-black mb-2">カスタムURL (スラッグ)</label>
+                        <div class="flex items-center volloer-input overflow-hidden">
+                            <span class="pl-4 text-gray-400 font-bold">view.html?group=</span>
+                            <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <div id="content" class="container mx-auto px-6 max-w-2xl hidden">
-        <div class="volloer-card p-8 shadow-sm text-center">
-            <div id="profile_icon" class="w-24 h-24 bg-theme rounded-3xl mx-auto mb-6 shadow-lg flex items-center justify-center text-white text-4xl">
-                <i class="fa-solid fa-users"></i>
-            </div>
-            
-            <h2 id="group_name" class="text-3xl font-black mb-4">---</h2>
-            
-            <div id="description" class="bg-gray-50 p-6 rounded-2xl font-bold text-left mb-8 border-2 border-dashed border-gray-200 leading-relaxed whitespace-pre-wrap">
-                ...
-            </div>
+            <section class="volloer-card p-6 shadow-sm">
+                <h3 class="text-lg font-black mb-6 text-orange-500">デザイン・紹介</h3>
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-black mb-2">テーマカラー</label>
+                        <input type="color" name="theme_color" value="#4d97ff" class="w-16 h-16 rounded-2xl cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-black mb-2">紹介文</label>
+                        <textarea name="description" rows="4" class="w-full p-4 volloer-input font-bold"></textarea>
+                    </div>
+                </div>
+            </section>
 
-            <div class="space-y-4">
-                <button class="w-full py-4 bg-white border-4 border-[#e0e0e0] rounded-2xl font-black hover:border-theme transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-globe text-theme"></i> 公式サイト
-                </button>
-                <button class="w-full py-4 bg-white border-4 border-[#e0e0e0] rounded-2xl font-black hover:border-theme transition-all flex items-center justify-center gap-2">
-                    <i class="fa-brands fa-x-twitter text-theme"></i> 公式X (Twitter)
-                </button>
-            </div>
-        </div>
+            <div id="debugStatus" class="text-center font-bold text-red-500 text-sm h-6"></div>
 
-        <footer class="mt-12 text-center pb-10">
-            <p class="text-xs font-black text-gray-300 tracking-widest uppercase">Created by Volloer Links</p>
-        </footer>
+            <button type="submit" id="submitBtn" class="volloer-btn px-12 py-5 text-2xl font-black w-full">
+                公開する！
+            </button>
+        </form>
     </div>
 
     <script type="module">
@@ -77,54 +74,64 @@
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function loadPage() {
-            const params = new URLSearchParams(window.location.search);
-            const slug = params.get('group'); 
+        const form = document.getElementById('createPageForm');
+        const btn = document.getElementById('submitBtn');
+        const debug = document.getElementById('debugStatus');
 
-            if (!slug) {
-                document.getElementById('loading').innerHTML = `
-                    <div class="py-10">
-                        <i class="fa-solid fa-circle-exclamation text-red-400 text-5xl mb-4"></i>
-                        <p class="text-red-400 font-bold text-xl">URLが正しくありません。</p>
-                        <a href="index.html" class="inline-block mt-4 text-theme font-bold">ホームに戻る</a>
-                    </div>
-                `;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            btn.disabled = true;
+            btn.innerText = '作成中...';
+            debug.innerText = '';
+
+            // 1. ログインユーザーがいるか確認
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+            if (authError || !user) {
+                debug.innerText = 'エラー：ログインしてないみたいだよ！';
+                btn.disabled = false;
+                btn.innerText = '公開する！';
                 return;
             }
 
-            const { data, error } = await supabase
+            const formData = new FormData(form);
+            const slug = formData.get('slug');
+
+            // 2. URL（スラッグ）の重複チェック
+            const { data: existing } = await supabase
                 .from('pages')
-                .select('*')
+                .select('slug')
                 .eq('slug', slug)
-                .single();
+                .maybeSingle();
 
-            if (error || !data) {
-                document.getElementById('loading').innerHTML = `
-                    <div class="py-10">
-                        <i class="fa-solid fa-ghost text-gray-300 text-5xl mb-4"></i>
-                        <p class="text-gray-400 font-bold text-xl">ページが見つかりませんでした。</p>
-                        <a href="index.html" class="inline-block mt-4 text-theme font-bold">ホームに戻る</a>
-                    </div>
-                `;
+            if (existing) {
+                debug.innerText = 'エラー：このURLはもう使われてるよ！';
+                btn.disabled = false;
+                btn.innerText = '公開する！';
                 return;
             }
 
-            // --- データの反映 ---
-            document.title = `${data.group_name} - Volloer Links`;
-            document.getElementById('group_name').innerText = data.group_name;
-            document.getElementById('description').innerText = data.description || "紹介文はありません。";
-            
-            // テーマカラーの反映
-            if (data.theme_color) {
-                document.documentElement.style.setProperty('--theme-color', data.theme_color);
+            // 3. データ挿入
+            const { error: insertError } = await supabase
+                .from('pages')
+                .insert([{
+                    user_id: user.id, // ここがテーブルのカラム名と合ってるか？
+                    group_name: formData.get('group_name'),
+                    slug: slug,
+                    theme_color: formData.get('theme_color'),
+                    description: formData.get('description')
+                }]);
+
+            if (insertError) {
+                console.error(insertError);
+                debug.innerText = 'エラー：' + insertError.message;
+                btn.disabled = false;
+                btn.innerText = '公開する！';
+            } else {
+                // 成功したら表示ページへ
+                location.href = `view.html?group=${slug}`;
             }
-
-            // 表示の切り替え
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('content').classList.remove('hidden');
-        }
-
-        loadPage();
+        });
     </script>
 </body>
 </html>
