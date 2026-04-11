@@ -16,7 +16,6 @@
         #chat-container::-webkit-scrollbar { width: 6px; }
         #chat-container::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
 
-        /* 通知アニメーション */
         .v-toast {
             animation: toast-in 0.3s ease-out forwards;
             pointer-events: auto;
@@ -57,8 +56,7 @@
         </div>
     </nav>
 
-    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4">
-        </div>
+    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
 
     <div class="bg-white p-4 border-t shadow-lg">
         <div class="container mx-auto max-w-4xl flex gap-3">
@@ -76,25 +74,17 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const params = new URLSearchParams(window.location.search);
-        const boxId = params.get('id'); // URLの ?id=... からUUIDを取得
+        const boxId = params.get('id');
         let user = JSON.parse(localStorage.getItem('v_user'));
 
         if (!boxId) location.href = 'index.html';
 
-        // 通知を表示する関数
         function showMessage(text, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
-            // Scratchブルーかエラーの赤
             toast.style.backgroundColor = type === 'success' ? '#4d97ff' : '#ff4d4d';
-            
             toast.className = `text-white px-8 py-3 rounded-full font-black shadow-2xl flex items-center gap-3 v-toast min-w-[280px] justify-center`;
-            toast.innerHTML = `
-                <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-circle-exclamation'}"></i>
-                <span>${text}</span>
-            `;
-
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-circle-exclamation'}"></i><span>${text}</span>`;
             container.appendChild(toast);
             setTimeout(() => {
                 toast.classList.add('fade-out');
@@ -102,84 +92,87 @@
             }, 3000);
         }
 
-        // アイコンバリデーション
         function getValidIcon(iconStr) {
             return (iconStr && [...iconStr].length === 1) ? iconStr : '👤';
         }
 
+        function linkify(text) {
+            const urlPattern = /(https?:\/\/[\w\.\-\?=\+&%#~!]+)/gi;
+            return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline hover:no-underline break-all">$1</a>');
+        }
+
+        // --- メンションハイライト関数 ---
+        function highlightMention(text) {
+            // 他人へのメンション（一般的なハイライト）
+            const generalMention = /(@[a-zA-Z0-9_ぁ-んァ-ヶー一-龠]+)/g;
+            let processed = text.replace(generalMention, '<span class="text-blue-400 font-bold">$1</span>');
+            
+            // 自分宛のメンション（設定がONの場合のみ、さらに目立たせる）
+            if (user && user.username && user.mention_accepted !== false) {
+                const myMentionPattern = new RegExp(`(@${user.username})`, 'g');
+                processed = processed.replace(myMentionPattern, '<span class="bg-yellow-200 text-yellow-900 px-1 rounded-md font-black ring-1 ring-yellow-400">$1</span>');
+            }
+            return processed;
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
-            // ユーザーアイコンの同期
             if (user) {
                 document.getElementById('my-icon').innerText = getValidIcon(user.icon);
-                const { data } = await supabaseClient.from('users').select('icon').eq('username', user.username).single();
+                // アイコンと一緒にメンション設定も取得
+                const { data } = await supabaseClient.from('users').select('icon, mention_accepted').eq('username', user.username).single();
                 if (data) {
                     user.icon = data.icon;
+                    user.mention_accepted = data.mention_accepted;
                     localStorage.setItem('v_user', JSON.stringify(user));
                     document.getElementById('my-icon').innerText = getValidIcon(user.icon);
                 }
             }
-
             loadBoxInfo();
             loadMessages();
             subscribeMessages();
-
-            // Enterキーで送信
             document.getElementById('msg-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
         });
 
-        // ルーム情報の取得
         async function loadBoxInfo() {
-            const { data, error } = await supabaseClient.from('boxes').select('*').eq('id', boxId).single();
+            const { data } = await supabaseClient.from('boxes').select('*').eq('id', boxId).single();
             if (data) {
                 document.getElementById('box-title').innerText = data.title;
                 document.getElementById('box-desc').innerText = data.description || '紹介文はありません';
                 document.getElementById('box-icon').innerText = data.icon_type || '💬';
-            } else {
-                console.error("Box not found", error);
             }
         }
 
-        // 過去のメッセージ取得
         async function loadMessages() {
-            const { data, error } = await supabaseClient
-                .from('messages')
-                .select('*')
-                .eq('box_id', boxId)
-                .order('created_at', { ascending: true });
-
-            if (!error && data) {
+            const { data } = await supabaseClient.from('messages').select('*').eq('box_id', boxId).order('created_at', { ascending: true });
+            if (data) {
                 data.forEach(msg => appendMessage(msg));
                 scrollToBottom();
             }
         }
 
-        // リアルタイム通信の開始
         function subscribeMessages() {
-            supabaseClient
-                .channel(`box-${boxId}`)
-                .on('postgres_changes', { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'messages', 
-                    filter: `box_id=eq.${boxId}` 
-                }, payload => {
-                    appendMessage(payload.new);
-                    scrollToBottom();
-                })
-                .subscribe();
+            supabaseClient.channel(`box-${boxId}`).on('postgres_changes', { 
+                event: 'INSERT', schema: 'public', table: 'messages', filter: `box_id=eq.${boxId}` 
+            }, payload => {
+                appendMessage(payload.new);
+                scrollToBottom();
+            }).subscribe();
         }
 
-        // 画面にメッセージを追加
         function appendMessage(msg) {
             const container = document.getElementById('chat-container');
             const isMe = user && msg.username === user.username;
             const displayIcon = getValidIcon(msg.sender_icon);
 
+            // 1. エスケープ 2. URL化 3. メンション化 の順に処理
+            let contentHTML = escapeHTML(msg.content);
+            contentHTML = linkify(contentHTML);
+            contentHTML = highlightMention(contentHTML);
+
             const div = document.createElement('div');
             div.className = `flex items-end gap-2 mb-4 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
-            
             div.innerHTML = `
                 <div class="w-8 h-8 flex-shrink-0 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-gray-100">
                     ${displayIcon}
@@ -187,39 +180,27 @@
                 <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
                     ${!isMe ? `<p class="text-[10px] font-black text-gray-400 mb-1 ml-1">${msg.username}</p>` : ''}
                     <div class="${isMe ? 'bg-volloer-orange text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border border-gray-100'} px-4 py-2 shadow-sm">
-                        <p class="font-bold text-sm leading-relaxed whitespace-pre-wrap">${escapeHTML(msg.content)}</p>
+                        <p class="font-bold text-sm leading-relaxed whitespace-pre-wrap">${contentHTML}</p>
                     </div>
                 </div>
             `;
             container.appendChild(div);
         }
 
-        // メッセージ送信
         async function sendMessage() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
-            
-            if (!user) {
-                showMessage("ログインしないと送れないよ！", "error");
-                return;
-            }
+            if (!user) { showMessage("ログインしないと送れないよ！", "error"); return; }
             if (!content) return;
-
-            const tempContent = content;
+            const temp = content;
             input.value = '';
-
             const { error } = await supabaseClient.from('messages').insert([{
                 box_id: boxId,
                 username: user.username,
                 sender_icon: getValidIcon(user.icon), 
-                content: tempContent
+                content: temp
             }]);
-
-            if (error) {
-                console.error("Send error:", error);
-                showMessage("送信に失敗しちゃった...", "error");
-                input.value = tempContent; // 失敗したら入力を戻す
-            }
+            if (error) { showMessage("送信に失敗しちゃった...", "error"); input.value = temp; }
         }
 
         function scrollToBottom() {
