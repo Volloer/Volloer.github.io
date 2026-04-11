@@ -138,6 +138,33 @@
             return permission === "granted";
         }
 
+        // ページが読み込まれた瞬間に実行
+window.addEventListener('load', async () => {
+    // ブラウザが通知に対応しているか ＆ まだ許可も拒否もしていない（default）かを確認
+    if ("Notification" in window && Notification.permission === "default") {
+        // いきなりブラウザ標準の許可ダイアログを出す
+        const permission = await Notification.requestPermission();
+        
+        // もしユーザーが「許可」してくれたら、DB側の設定も自動でONにする（任意）
+        if (permission === "granted") {
+            const savedUser = localStorage.getItem('v_user');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                // Supabaseのmention_acceptedをtrueに更新
+                await supabaseClient
+                    .from('users')
+                    .update({ mention_accepted: true })
+                    .eq('username', user.username);
+                
+                // ローカルストレージも同期
+                user.mention_accepted = true;
+                localStorage.setItem('v_user', JSON.stringify(user));
+                console.log("通知が有効になったぜ！");
+            }
+        }
+    }
+});
+
         document.getElementById('mention-toggle').addEventListener('change', async (e) => {
             if (e.target.checked) {
                 const granted = await requestNotificationPermission();

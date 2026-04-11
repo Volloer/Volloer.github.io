@@ -73,6 +73,33 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // ページが読み込まれた瞬間に実行
+window.addEventListener('load', async () => {
+    // ブラウザが通知に対応しているか ＆ まだ許可も拒否もしていない（default）かを確認
+    if ("Notification" in window && Notification.permission === "default") {
+        // いきなりブラウザ標準の許可ダイアログを出す
+        const permission = await Notification.requestPermission();
+        
+        // もしユーザーが「許可」してくれたら、DB側の設定も自動でONにする（任意）
+        if (permission === "granted") {
+            const savedUser = localStorage.getItem('v_user');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                // Supabaseのmention_acceptedをtrueに更新
+                await supabaseClient
+                    .from('users')
+                    .update({ mention_accepted: true })
+                    .eq('username', user.username);
+                
+                // ローカルストレージも同期
+                user.mention_accepted = true;
+                localStorage.setItem('v_user', JSON.stringify(user));
+                console.log("通知が有効になったぜ！");
+            }
+        }
+    }
+});
+
         const params = new URLSearchParams(window.location.search);
         const boxId = params.get('id');
         let user = JSON.parse(localStorage.getItem('v_user'));
