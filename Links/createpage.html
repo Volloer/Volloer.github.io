@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ページ作成 - Volloer Links</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bg-scratch-blue { background-color: #4d97ff; }
+        .text-scratch-blue { color: #4d97ff; }
+        .input-focus:focus { outline: none; border-color: #4d97ff; box-shadow: 0 0 0 4px rgba(77, 151, 255, 0.2); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 pb-20">
+
+    <nav class="bg-white border-b-4 border-gray-100 p-4 mb-8">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black text-scratch-blue">Volloer <span class="text-gray-400">Links</span></h1>
+            <a href="index.html" class="text-sm font-bold text-gray-400 hover:text-gray-600">キャンセル</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 max-w-2xl">
+        <header class="mb-10 text-center">
+            <h2 class="text-3xl font-black mb-2">新しいページを作る</h2>
+            <p class="text-gray-400 font-bold">あなたのコミュニティの情報を入力しましょう。</p>
+        </header>
+
+        <form id="createPageForm" class="space-y-8">
+            <section class="bg-white p-8 rounded-[2rem] border-4 border-gray-100 shadow-sm">
+                <h3 class="text-lg font-black mb-6 text-gray-700 flex items-center">
+                    <i class="fa-solid fa-id-card mr-2 text-scratch-blue"></i> 基本情報
+                </h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-black mb-2 text-gray-500">グループ名</label>
+                        <input type="text" name="group_name" placeholder="例: Volloer 開発チーム" class="w-full p-4 bg-gray-50 border-4 border-transparent rounded-2xl font-bold input-focus transition-all" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-black mb-2 text-gray-500">カスタムURL (スラッグ)</label>
+                        <div class="flex items-center bg-gray-50 rounded-2xl border-4 border-transparent overflow-hidden focus-within:border-scratch-blue transition-all">
+                            <span class="pl-4 text-gray-400 font-bold text-sm">links/</span>
+                            <input type="text" name="slug" placeholder="my-group" class="w-full p-4 bg-transparent font-bold focus:outline-none" required>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white p-8 rounded-[2rem] border-4 border-gray-100 shadow-sm">
+                <h3 class="text-lg font-black mb-6 text-gray-700 flex items-center">
+                    <i class="fa-solid fa-palette mr-2 text-orange-500"></i> デザイン・詳細
+                </h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-black mb-2 text-gray-500">テーマカラー</label>
+                        <input type="color" name="theme_color" value="#4d97ff" class="w-16 h-16 rounded-xl cursor-pointer border-4 border-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-black mb-2 text-gray-500">紹介文</label>
+                        <textarea name="description" rows="4" placeholder="活動内容を自由に書いてください。" class="w-full p-4 bg-gray-50 border-4 border-transparent rounded-2xl font-bold input-focus transition-all"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <div class="text-center pt-6">
+                <button type="submit" class="bg-scratch-blue text-white px-16 py-5 rounded-full font-black text-xl shadow-[0_6px_0_#3d7acc] hover:translate-y-1 hover:shadow-[0_2px_0_#3d7acc] transition-all">
+                    この内容で公開する
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+         const SUPABASE_URL = 'https://xlvmfodeheufqjmevktq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsdm1mb2RlaGV1ZnFqbWV2a3RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDQyNDQsImV4cCI6MjA5MTIyMDI0NH0.Mjb5o4cvEY_ygu5xludZuTeTP6ftiW_qeAZFIHrHp40';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        document.getElementById('createPageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = '作成中...';
+
+            // 1. ログインユーザーの確認（TesterさんたちのIDを取る）
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+            if (authError || !user) {
+                alert('ログインが必要です。先にログインしてください。');
+                btn.disabled = false;
+                btn.innerText = 'この内容で公開する';
+                return;
+            }
+
+            // 2. フォームデータの取得
+            const formData = new FormData(e.target);
+            const pageData = {
+                user_id: user.id, // これで既存のusers.id(uuid)と紐付く
+                group_name: formData.get('group_name'),
+                slug: formData.get('slug'),
+                catchphrase: formData.get('catchphrase'),
+                description: formData.get('description'),
+                theme_color: formData.get('theme_color')
+            };
+
+            // 3. Supabaseのpagesテーブルへ保存
+            const { data, error } = await supabase
+                .from('pages')
+                .insert([pageData]);
+
+            if (error) {
+                console.error('Save Error:', error);
+                alert('エラー: ' + error.message);
+                btn.disabled = false;
+                btn.innerText = 'この内容で公開する';
+            } else {
+                alert('ページが正常に作成されました！');
+                location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
