@@ -79,18 +79,6 @@
 
         if (!boxId) location.href = 'index.html';
 
-        // 通知許可の確認
-        window.addEventListener('load', async () => {
-            if ("Notification" in window && Notification.permission === "default") {
-                const permission = await Notification.requestPermission();
-                if (permission === "granted" && user) {
-                    await supabaseClient.from('users').update({ mention_accepted: true }).eq('username', user.username);
-                    user.mention_accepted = true;
-                    localStorage.setItem('v_user', JSON.stringify(user));
-                }
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', async () => {
             if (user) {
                 document.getElementById('my-icon').innerText = getValidIcon(user.icon);
@@ -131,7 +119,7 @@
 
         function subscribeMessages() {
             supabaseClient
-                .channel(`public:messages:box_id=eq.${boxId}`)
+                .channel(`box_chat_${boxId}`)
                 .on('postgres_changes', { 
                     event: 'INSERT', 
                     schema: 'public', 
@@ -181,6 +169,7 @@
             const temp = content;
             input.value = '';
 
+            // 1. メッセージを送信
             const { error: msgError } = await supabaseClient.from('messages').insert([{
                 box_id: boxId,
                 username: user.username,
@@ -194,7 +183,7 @@
                 return;
             }
 
-            // 活動順を更新するためにboxesテーブルのupdated_atを更新
+            // 2. ★活動順を更新するために boxes テーブルの updated_at を「今」にする
             await supabaseClient
                 .from('boxes')
                 .update({ updated_at: new Date().toISOString() })
@@ -211,7 +200,7 @@
         function highlightMention(text) {
             const generalMention = /(@[a-zA-Z0-9_ぁ-んァ-ヶー一-龠]+)/g;
             let processed = text.replace(generalMention, '<span class="text-blue-400 font-bold">$1</span>');
-            if (user && user.username && user.mention_accepted !== false) {
+            if (user && user.username) {
                 const myMentionPattern = new RegExp(`(@${user.username})`, 'g');
                 processed = processed.replace(myMentionPattern, '<span class="bg-yellow-200 text-yellow-900 px-1 rounded-md font-black ring-1 ring-yellow-400">$1</span>');
             }
@@ -232,8 +221,7 @@
         function showMessage(text, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.style.backgroundColor = type === 'success' ? '#4d97ff' : '#ff4d4d';
-            toast.className = `text-white px-8 py-3 rounded-full font-black shadow-2xl flex items-center gap-3 v-toast min-w-[280px] justify-center`;
+            toast.className = `${type === 'success' ? 'bg-scratch-blue' : 'bg-red-500'} text-white px-8 py-3 rounded-full font-black shadow-2xl flex items-center gap-3 v-toast min-w-[280px] justify-center`;
             toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-circle-exclamation'}"></i><span>${text}</span>`;
             container.appendChild(toast);
             setTimeout(() => {

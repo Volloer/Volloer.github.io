@@ -57,11 +57,7 @@
         </div>
 
         <div id="box-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div onclick="goToCreate()" class="border-4 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center p-8 hover:bg-orange-50 hover:border-volloer-orange transition-all cursor-pointer text-gray-300 hover:text-volloer-orange h-72">
-                <i class="fa-solid fa-plus-circle text-5xl mb-4"></i>
-                <span class="font-black text-xl">新しいBoXを作る</span>
             </div>
-        </div>
     </main>
 
     <script>
@@ -114,9 +110,7 @@
         }
 
         async function fetchBoxes() {
-            const listArea = document.getElementById('box-list');
-            
-            // ★重要：updated_at でソート（降順）
+            // ★updated_at でソート（降順）
             const { data, error } = await supabaseClient
                 .from('boxes')
                 .select('*')
@@ -124,7 +118,7 @@
 
             if (error) {
                 console.error("データ取得エラー:", error);
-                // updated_atがない場合のエラー回避策としてcreated_atで再試行
+                // カラム作成直後などで不安定な場合の保険
                 const fallback = await supabaseClient.from('boxes').select('*').order('created_at', { ascending: false });
                 if (fallback.data) renderBoxes(fallback.data);
                 return;
@@ -135,7 +129,7 @@
 
         function renderBoxes(data) {
             const listArea = document.getElementById('box-list');
-            // 「作る」ボタンのHTMLを取得（最初の要素）
+            
             const createBtnHtml = `
                 <div onclick="goToCreate()" class="border-4 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center p-8 hover:bg-orange-50 hover:border-volloer-orange transition-all cursor-pointer text-gray-300 hover:text-volloer-orange h-72">
                     <i class="fa-solid fa-plus-circle text-5xl mb-4"></i>
@@ -179,6 +173,7 @@
         }
 
         function escapeHTML(str) {
+            if (!str) return '';
             const p = document.createElement('p');
             p.textContent = str;
             return p.innerHTML;
