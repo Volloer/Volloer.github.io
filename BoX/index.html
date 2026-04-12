@@ -94,7 +94,6 @@
             const user = JSON.parse(localStorage.getItem('v_user'));
             
             if (user) {
-                // ここが修正ポイント：DBにある「紫アイコン」等のゴミデータを無視して絵文字か判定
                 let displayIcon = '👤';
                 if (user.icon && [...user.icon].length === 1) {
                     displayIcon = user.icon;
@@ -116,10 +115,13 @@
 
         async function fetchBoxes() {
             const listArea = document.getElementById('box-list');
+            
+            // 修正箇所：.order('updated_at', { ascending: false }) に変更
+            // もしテーブルのカラム名が last_activity_at ならそちらに変更してください
             const { data, error } = await supabaseClient
                 .from('boxes')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('updated_at', { ascending: false });
 
             if (error) return;
 
