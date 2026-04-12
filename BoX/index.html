@@ -113,22 +113,36 @@
             }
         }
 
-async function fetchBoxes() {
+        async function fetchBoxes() {
             const listArea = document.getElementById('box-list');
             
-            // 修正：もしupdated_atがないとエラーになるので、まずはcreated_atで確実に取得する
-            // 活動順を有効にしたい場合は、下の行を .order('updated_at', { ascending: false }) に戻す
+            // ★重要：updated_at でソート（降順）
             const { data, error } = await supabaseClient
                 .from('boxes')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('updated_at', { ascending: false });
 
             if (error) {
                 console.error("データ取得エラー:", error);
+                // updated_atがない場合のエラー回避策としてcreated_atで再試行
+                const fallback = await supabaseClient.from('boxes').select('*').order('created_at', { ascending: false });
+                if (fallback.data) renderBoxes(fallback.data);
                 return;
             }
 
-            const createBtnHtml = listArea.children[0].outerHTML;
+            renderBoxes(data);
+        }
+
+        function renderBoxes(data) {
+            const listArea = document.getElementById('box-list');
+            // 「作る」ボタンのHTMLを取得（最初の要素）
+            const createBtnHtml = `
+                <div onclick="goToCreate()" class="border-4 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center p-8 hover:bg-orange-50 hover:border-volloer-orange transition-all cursor-pointer text-gray-300 hover:text-volloer-orange h-72">
+                    <i class="fa-solid fa-plus-circle text-5xl mb-4"></i>
+                    <span class="font-black text-xl">新しいBoXを作る</span>
+                </div>
+            `;
+
             listArea.innerHTML = createBtnHtml + data.map(box => `
                 <div onclick="location.href='chat.html?id=${box.id}'" class="box-card bg-white p-8 rounded-[2.5rem] cursor-pointer group flex flex-col h-72 shadow-sm">
                     <div class="flex justify-between items-start mb-6">
