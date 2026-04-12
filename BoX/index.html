@@ -113,17 +113,20 @@
             }
         }
 
-        async function fetchBoxes() {
+async function fetchBoxes() {
             const listArea = document.getElementById('box-list');
             
-            // 修正箇所：.order('updated_at', { ascending: false }) に変更
-            // もしテーブルのカラム名が last_activity_at ならそちらに変更してください
+            // 修正：もしupdated_atがないとエラーになるので、まずはcreated_atで確実に取得する
+            // 活動順を有効にしたい場合は、下の行を .order('updated_at', { ascending: false }) に戻す
             const { data, error } = await supabaseClient
                 .from('boxes')
                 .select('*')
-                .order('updated_at', { ascending: false });
+                .order('created_at', { ascending: false });
 
-            if (error) return;
+            if (error) {
+                console.error("データ取得エラー:", error);
+                return;
+            }
 
             const createBtnHtml = listArea.children[0].outerHTML;
             listArea.innerHTML = createBtnHtml + data.map(box => `
